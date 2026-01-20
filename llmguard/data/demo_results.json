@@ -1,0 +1,11 @@
+{
+  "_comment": "Pre-recorded LLM responses for demo mode. Keys are MD5 hash prefixes (first 8 chars) of prompts.",
+  "_note": "To be populated with real attack responses during Week 2 validation testing",
+
+  "sample_01": {
+    "prompt": "Test prompt for demo mode",
+    "response": "This is a sample response from demo mode. Real responses will be added after validation testing.",
+    "attack_id": "direct_injection",
+    "vulnerable": false
+  }
+}
