@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  llmguard:
+    build: .
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OLLAMA_HOST=${OLLAMA_HOST:-}
+    volumes:
+      - ./reports:/app/reports
+    # Override command for different modes:
+    # Demo:  docker compose run llmguard demo
+    # Scan:  docker compose run llmguard scan --target openai --budget 0.50
+    # List:  docker compose run llmguard list
+    command: ["demo"]
