@@ -33,14 +33,27 @@ class Config:
         """
         # Map provider to environment variable name
         env_map = {
-            "openai": "OPENAI_API_KEY",
-            "anthropic": "ANTHROPIC_API_KEY",
-            "ollama": "OLLAMA_HOST"  # Optional, defaults to localhost
+            "openai":      "OPENAI_API_KEY",
+            "groq":        "GROQ_API_KEY",
+            "openrouter":  "OPENROUTER_API_KEY",
+            "together":    "TOGETHER_API_KEY",
+            "gemini":      "GEMINI_API_KEY",
+            "multi-agent": "GEMINI_API_KEY",  # multi-agent pipeline uses Gemini
+            "anthropic":   "ANTHROPIC_API_KEY",
+            "ollama":      None,  # No key needed for local Ollama
         }
 
-        env_key = env_map.get(provider)
-        if not env_key and required:
-            raise ValueError(f"Unknown provider: {provider}")
+        # Check if provider is known (None means "no key needed", missing key means "unknown")
+        if provider not in env_map:
+            if required:
+                raise ValueError(f"Unknown provider: {provider}")
+            return None
+
+        env_key = env_map[provider]
+
+        # Ollama and similar providers don't require a key
+        if env_key is None:
+            return None
 
         # 1. Check environment variable
         if env_key and (key := os.getenv(env_key)):

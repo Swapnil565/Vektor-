@@ -64,3 +64,4 @@ jobs:
 
       - name: Test Docker demo mode
         run: docker run --rm llmguard-lite demo
+

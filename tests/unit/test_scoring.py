@@ -48,16 +48,14 @@ class TestSeverityScorer:
         assert result == Severity.MEDIUM
 
     def test_info_severity_zero_rate(self, scorer):
-        """Zero success rate → score depends on category weight alone."""
-        # success_rate=0, "Evasion" weight=4, round(4/2)=2, total=2 → LOW
+        """Zero success rate always returns INFO regardless of category weight."""
         result = scorer.calculate(0.0, "Evasion")
-        assert result == Severity.LOW
+        assert result == Severity.INFO
 
     def test_zero_rate_default_weight(self, scorer):
-        """Zero success rate + unknown category (default weight 5)."""
+        """Zero success rate + unknown category always returns INFO."""
         result = scorer.calculate(0.0, "Unknown")
-        # 0 + round(5/2) = round(2.5) = 2 (banker's rounding) → LOW
-        assert result == Severity.LOW
+        assert result == Severity.INFO
 
     def test_full_range_prompt_injection(self, scorer):
         """Test full success rate for Prompt Injection (weight=7)."""

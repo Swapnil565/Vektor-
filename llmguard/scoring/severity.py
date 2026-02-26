@@ -31,11 +31,16 @@ class SeverityScorer:
         """
         Calculate severity from success rate and attack category.
 
-        Scoring:
+        If success_rate is 0, the attack did not succeed — always INFO.
+
+        Scoring (only applied when success_rate > 0):
         - Success rate contributes 0–4 points
         - Category weight contributes 0–5 points (rounded, not truncated)
         - Total 0–9 maps to severity levels
         """
+        if success_rate == 0:
+            return Severity.INFO
+
         score = 0
 
         # Success rate (0–4 points)

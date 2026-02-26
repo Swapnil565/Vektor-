@@ -51,11 +51,10 @@ class TestConfigGetApiKey:
                         key = Config.get_api_key("openai")
                         assert key == "sk-interactive"
 
-    def test_ollama_uses_host_env(self):
-        """Ollama provider uses OLLAMA_HOST env var."""
-        with patch.dict(os.environ, {"OLLAMA_HOST": "http://localhost:11434"}):
-            key = Config.get_api_key("ollama")
-            assert key == "http://localhost:11434"
+    def test_ollama_needs_no_key(self):
+        """Ollama provider requires no API key (local model)."""
+        key = Config.get_api_key("ollama")
+        assert key is None
 
 
 class TestConfigLoadFromFile:

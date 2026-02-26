@@ -5,7 +5,7 @@ This is the presentation layer — it consumes the results dict
 from scanner.scan() and renders it in multiple formats.
 """
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 from rich.console import Console
 from rich.table import Table
@@ -112,7 +112,7 @@ class Reporter:
 </head>
 <body>
 <h1>LLMGuard Security Report</h1>
-<p class="meta">Target: {results.get('target', 'N/A')} | Model: {results.get('model', 'N/A')} | Generated: {results.get('timestamp', datetime.utcnow().isoformat()+'Z')}</p>
+<p class="meta">Target: {results.get('target', 'N/A')} | Model: {results.get('model', 'N/A')} | Generated: {results.get('timestamp', datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'))}</p>
 
 <div class="summary">
   <div class="badge">{risk}/100</div>

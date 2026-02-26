@@ -1,15 +1,19 @@
 """
 Target factory for creating provider adapters.
 
-Supports multiple providers with a clean interface:
-- OpenAI (GPT models)
-- Mock (demo mode, no API calls)
-- Future: Anthropic (Claude), Ollama (local models)
+Supports multiple providers with a clean BYOK (Bring Your Own Key) interface:
+  - openai      — OpenAI GPT models (OPENAI_API_KEY)
+  - groq        — Groq (free tier, GROQ_API_KEY)
+  - openrouter  — OpenRouter free models (OPENROUTER_API_KEY)
+  - together    — Together AI (TOGETHER_API_KEY)
+  - ollama      — Local Ollama (no key needed)
+  - gemini      — Google Gemini (free tier, GEMINI_API_KEY)
+  - mock        — Demo mode (no API key, pre-recorded results)
 """
-
 from llmguard.targets.base import BaseTarget
-from llmguard.targets.openai import OpenAITarget
-from llmguard.targets.mock import MockTarget
+
+
+_OPENAI_COMPATIBLE = {"openai", "groq", "openrouter", "together", "ollama"}
 
 
 def create_target(provider: str, **config) -> BaseTarget:
@@ -17,38 +21,46 @@ def create_target(provider: str, **config) -> BaseTarget:
     Factory function to create target adapters.
 
     Args:
-        provider: Provider name ("openai" | "mock" | "anthropic" | "ollama")
+        provider: Provider name (see module docstring)
         **config: Provider-specific configuration
 
     Returns:
         Configured BaseTarget instance
 
     Examples:
-        # BYOK mode with OpenAI
-        target = create_target("openai", api_key="sk-...", model="gpt-4")
-
-        # Demo mode (no API key)
-        target = create_target("mock", dataset="demo_results")
-
-        # Future: Anthropic Claude (v0.2)
-        target = create_target("anthropic", api_key="sk-ant-...", model="claude-3")
+        create_target("openai", api_key="sk-...", model="gpt-4o-mini")
+        create_target("groq", api_key="gsk_...", model="llama-3.1-8b-instant")
+        create_target("openrouter", api_key="sk-or-...")
+        create_target("gemini", api_key="AIza...", model="gemini-1.5-flash")
+        create_target("ollama", model="llama3")
+        create_target("mock")
+        create_target("vulnerable")  # scanner validation — no API key needed
 
     Raises:
         ValueError: If provider is unknown
     """
-    providers = {
-        "openai": OpenAITarget,
-        "mock": MockTarget,
-        # Future providers (v0.2+):
-        # "anthropic": AnthropicTarget,
-        # "ollama": OllamaTarget,
-    }
+    if provider in _OPENAI_COMPATIBLE:
+        from llmguard.targets.openai_compatible import OpenAICompatibleTarget
+        return OpenAICompatibleTarget(provider=provider, **config)
 
-    if provider not in providers:
-        available = ", ".join(providers.keys())
-        raise ValueError(
-            f"Unknown provider: {provider}. "
-            f"Available: {available}"
-        )
+    if provider == "gemini":
+        from llmguard.targets.gemini import GeminiTarget
+        return GeminiTarget(**config)
 
-    return providers[provider](**config)
+    if provider == "mock":
+        from llmguard.targets.mock import MockTarget
+        return MockTarget(**config)
+
+    if provider == "vulnerable":
+        from llmguard.targets.vulnerable import VulnerableTarget
+        return VulnerableTarget()
+
+    if provider == "multi-agent":
+        from llmguard.targets.multi_agent import MultiAgentTarget
+        return MultiAgentTarget(**config)
+
+    available = sorted(_OPENAI_COMPATIBLE | {"gemini", "mock", "multi-agent", "vulnerable"})
+    raise ValueError(
+        f"Unknown provider: '{provider}'. "
+        f"Available: {', '.join(available)}"
+    )

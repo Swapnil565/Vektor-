@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 
 
@@ -21,7 +21,7 @@ class Vulnerability:
 
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow().isoformat() + 'Z'
+            self.timestamp = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
     def to_dict(self) -> Dict:
         return asdict(self)
