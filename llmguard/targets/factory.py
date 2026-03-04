@@ -13,7 +13,11 @@ Supports multiple providers with a clean BYOK (Bring Your Own Key) interface:
 from llmguard.targets.base import BaseTarget
 
 
-_OPENAI_COMPATIBLE = {"openai", "groq", "openrouter", "together", "ollama"}
+_OPENAI_COMPATIBLE = {
+    "openai", "groq", "openrouter", "together", "ollama",
+    # Open-source local LLM apps (all speak OpenAI Chat API)
+    "lmstudio", "localai", "openwebui", "anythingllm", "jan",
+}
 
 
 def create_target(provider: str, **config) -> BaseTarget:

@@ -52,7 +52,43 @@ PROVIDER_PRESETS: Dict[str, Dict] = {
     "ollama": {
         "base_url": "http://localhost:11434/v1",
         "default_model": "llama3",
-        "env_key": None,  # No key needed for local models
+        "env_key": None,
+        "pricing": {},
+    },
+    # ── Open-source local LLM applications ──────────────────────────────────
+    "lmstudio": {
+        # LM Studio: https://lmstudio.ai — GUI app, enable Local Server in app
+        "base_url": "http://localhost:1234/v1",
+        "default_model": "local-model",
+        "env_key": None,
+        "pricing": {},
+    },
+    "localai": {
+        # LocalAI: https://localai.io — Docker: ghcr.io/mudler/local-ai
+        "base_url": "http://localhost:8080/v1",
+        "default_model": "gpt-3.5-turbo",
+        "env_key": None,
+        "pricing": {},
+    },
+    "openwebui": {
+        # Open WebUI: https://github.com/open-webui/open-webui — runs on Ollama
+        "base_url": "http://localhost:3000/openai/v1",
+        "default_model": "llama3",
+        "env_key": "OPENWEBUI_API_KEY",  # Settings > Account > API Keys
+        "pricing": {},
+    },
+    "anythingllm": {
+        # AnythingLLM: https://anythingllm.com — all-in-one RAG + chat app
+        "base_url": "http://localhost:3001/api/v1/openai",
+        "default_model": "@anythingllm/default",
+        "env_key": "ANYTHINGLLM_API_KEY",  # Settings > API Keys
+        "pricing": {},
+    },
+    "jan": {
+        # Jan: https://jan.ai — Electron desktop app
+        "base_url": "http://localhost:1337/v1",
+        "default_model": "llama3-8b-instruct",
+        "env_key": None,
         "pricing": {},
     },
 }

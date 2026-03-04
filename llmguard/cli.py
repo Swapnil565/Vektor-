@@ -23,7 +23,12 @@ from llmguard import __version__
 
 console = Console()
 
-PROVIDERS = ["openai", "groq", "openrouter", "together", "ollama", "gemini", "multi-agent", "vulnerable"]
+PROVIDERS = [
+    "openai", "groq", "openrouter", "together", "ollama", "gemini", "multi-agent",
+    # Open-source local LLM apps
+    "lmstudio", "localai", "openwebui", "anythingllm", "jan",
+    "vulnerable",
+]
 
 PROVIDER_DESCRIPTIONS = {
     "openai":       "OpenAI  (GPT-4o, GPT-3.5, ...)",
@@ -33,6 +38,12 @@ PROVIDER_DESCRIPTIONS = {
     "ollama":       "Ollama  (local models, no key needed)",
     "gemini":       "Google Gemini  (free tier: 500 req/day)",
     "multi-agent":  "Multi-Agent  (3-hop Gemini pipeline)",
+    # Local open-source apps
+    "lmstudio":     "LM Studio  (localhost:1234, enable Local Server in app)",
+    "localai":      "LocalAI  (localhost:8080, Docker: ghcr.io/mudler/local-ai)",
+    "openwebui":    "Open WebUI  (localhost:3000, runs on top of Ollama)",
+    "anythingllm":  "AnythingLLM  (localhost:3001, all-in-one RAG + chat)",
+    "jan":          "Jan  (localhost:1337, desktop Electron app)",
     "vulnerable":   "Vulnerable  (intentionally broken target, no key)",
 }
 
@@ -60,7 +71,7 @@ def _pick_provider() -> str:
     table.add_column("name", style="bold white", no_wrap=True)
     table.add_column("desc", style="dim")
 
-    no_key = {"ollama", "vulnerable"}
+    no_key = {"ollama", "vulnerable", "lmstudio", "localai", "jan"}
     for i, p in enumerate(PROVIDERS, 1):
         note = "  [dim](no key needed)[/dim]" if p in no_key else ""
         table.add_row(f"[{i}]", p, PROVIDER_DESCRIPTIONS[p] + note)
@@ -81,7 +92,7 @@ def _pick_provider() -> str:
 
 def _get_api_key(provider: str) -> Optional[str]:
     """Prompt for API key; skip for providers that don't need one."""
-    no_key = {"ollama", "vulnerable"}
+    no_key = {"ollama", "vulnerable", "lmstudio", "localai", "jan"}
     if provider in no_key:
         return None
 
@@ -171,7 +182,7 @@ def _run_wizard():
     )
 
 
-def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attacks, api_key):
+def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attacks, api_key, base_url=None):
     """Shared scan logic used by both wizard and `scan` subcommand."""
     from llmguard.config import Config
     from llmguard.targets.factory import create_target
@@ -196,6 +207,8 @@ def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attac
         target_kwargs["model"] = model
     if system_prompt:
         target_kwargs["system_prompt"] = system_prompt
+    if base_url:
+        target_kwargs["base_url"] = base_url
 
     try:
         llm_target = create_target(target, **target_kwargs)
@@ -266,7 +279,8 @@ def cli(ctx):
 @click.option("--quick", is_flag=True, help="Quick mode: only run high-success-rate attacks")
 @click.option("--attacks", default=None, help="Comma-separated list of attack IDs to run")
 @click.option("--api-key", default=None, help="API key (or set env var: OPENAI_API_KEY, GROQ_API_KEY, etc.)")
-def scan(target, model, system_prompt, system_prompt_file, budget, output, ci, quick, attacks, api_key):
+@click.option("--base-url", default=None, help="Override endpoint URL (e.g. http://localhost:5000/v1)")
+def scan(target, model, system_prompt, system_prompt_file, budget, output, ci, quick, attacks, api_key, base_url):
     """Run a security scan against an LLM target."""
     if system_prompt_file:
         with open(system_prompt_file, "r", encoding="utf-8") as f:
@@ -282,6 +296,7 @@ def scan(target, model, system_prompt, system_prompt_file, budget, output, ci, q
         quick=quick,
         attacks=attacks,
         api_key=api_key,
+        base_url=base_url,
     )
 
 
