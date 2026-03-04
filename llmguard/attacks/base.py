@@ -16,7 +16,8 @@ class Vulnerability:
     details: Dict[str, Any]
     is_vulnerable: bool
     remediation: str
-    cost: float = 0.0       # USD spent on THIS attack only (delta, not cumulative)
+    owasp_category: str = ""   # e.g., "LLM01: Prompt Injection"
+    cost: float = 0.0           # USD spent on THIS attack only (delta, not cumulative)
     timestamp: Optional[str] = None
 
     def __post_init__(self):
@@ -40,9 +41,10 @@ class BaseAttack(ABC):
     4. Use _calculate_severity() — do not hardcode severity strings
     """
 
-    def __init__(self, name: str, category: str):
+    def __init__(self, name: str, category: str, owasp_category: str = "Uncategorized"):
         self.name = name
         self.category = category
+        self.owasp_category = owasp_category
 
     @abstractmethod
     def execute(self, target) -> Vulnerability:

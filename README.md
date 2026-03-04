@@ -32,6 +32,15 @@ docker compose run -e OPENAI_API_KEY=sk-... llmguard scan --target openai
 
 ## 💡 Why LLMGuard?
 
+| Feature | LLMGuard-Lite | Garak | Promptfoo | PyRIT |
+| :--- | :---: | :---: | :---: | :---: |
+| **Primary Focus** | **Actionable Security** | Vulnerability Scanning | General Eval / Testing | Red Teaming Framework |
+| **Setup Time** | **< 30s** | ~10 mins | ~5 mins | ~30 mins |
+| **Scan Speed** | **Fast (Targeted)** | Slow (Exhaustive) | Fast | Slow (Agentic) |
+| **Cost Control** | **✅ Built-in Budget** | ❌ | ❌ | ❌ |
+| **CI/CD Ready** | **✅ Native** | ⚠️ Heavy | ✅ | ⚠️ Complex |
+| **RAG/Doc Attacks** | **✅ Specialized** | ⚠️ Limited | ✅ | ✅ |
+
 | Before | After |
 |--------|-------|
 | Hire pentester ($5K) | Run: `llmguard scan` |
@@ -237,15 +246,13 @@ Built on research from:
 
 If you find this useful, please star the repository and share with your network!
 
-- GitHub: [llmguard-lite](https://github.com/yourusername/llmguard-lite)
-- Issues: [Bug reports & feature requests](https://github.com/yourusername/llmguard-lite/issues)
-- Twitter: [@yourusername](https://twitter.com/yourusername)
+- GitHub: [llmguard-lite](https://github.com/swapnilwankhede23/llmguard-lite)
+- Issues: [Bug reports & feature requests](https://github.com/swapnilwankhede23/llmguard-lite/issues)
 
 ## 📧 Contact
 
-- Email: your.email@example.com
-- Twitter: [@yourusername](https://twitter.com/yourusername)
-- LinkedIn: [Your Name](https://linkedin.com/in/yourprofile)
+- Email: swapnil.wankhede23@spit.ac.in
+- Author: Swapnil
 
 ---
 
