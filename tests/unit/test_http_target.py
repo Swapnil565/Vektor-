@@ -198,7 +198,7 @@ class TestQueryFlow:
         t = self._make_target()
         captured = {}
 
-        def fake_request(body):
+        def fake_request(body, prompt=""):
             captured["body"] = body
             return {"message": "ok"}
 

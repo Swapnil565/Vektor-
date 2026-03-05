@@ -52,6 +52,7 @@ class HTTPEndpointTarget(BaseTarget):
         request_template: Optional[Dict] = None,
         request_field: str = "message",
         response_field: str = "message",
+        param_field: Optional[str] = None,
         model: Optional[str] = None,
         system_prompt: Optional[str] = None,
         timeout: int = 30,
@@ -59,10 +60,13 @@ class HTTPEndpointTarget(BaseTarget):
         super().__init__(name="http")
         self.url = url
         self.method = method.upper()
-        self.headers = {"Content-Type": "application/json", **(headers or {})}
+        # Don't set Content-Type if using query-param mode (no body sent)
+        self.headers = ({} if param_field else {"Content-Type": "application/json"})
+        self.headers.update(headers or {})
         self.request_template = request_template
         self.request_field = request_field
         self.response_field = response_field
+        self.param_field = param_field  # if set, prompt goes as ?param_field=... instead of JSON body
         self.model = model
         self.system_prompt = system_prompt
         self.timeout = timeout
@@ -146,20 +150,36 @@ class HTTPEndpointTarget(BaseTarget):
             if key in data:
                 return str(data[key])
 
+        # Raw body fallback (returned when server gives non-JSON or error)
+        if "_raw" in data:
+            return str(data["_raw"])
+
         return json.dumps(data)
 
     # ── HTTP transport ───────────────────────────────────────────────────────
 
-    def _http_request(self, body: Dict) -> Any:
-        """Send the request using httpx (preferred) or requests."""
+    def _http_request(self, body: Dict, prompt: str = "") -> Any:
+        """Send the request using httpx (preferred) or requests.
+
+        Never raises on 4xx/5xx — returns the parsed response body regardless,
+        so the scanner sees exactly what the server replied (error messages,
+        content-filter rejections, etc.).
+        """
+        # Query-param mode: prompt goes in the URL, no body
+        params = {self.param_field: prompt} if self.param_field else None
+        json_body = None if self.param_field else body
+
         try:
             import httpx
             with httpx.Client(timeout=self.timeout) as client:
                 resp = client.request(
-                    self.method, self.url, headers=self.headers, json=body
+                    self.method, self.url, headers=self.headers,
+                    json=json_body, params=params,
                 )
-                resp.raise_for_status()
-                return resp.json()
+                try:
+                    return resp.json()
+                except Exception:
+                    return {"_raw": resp.text, "_status": resp.status_code}
         except ImportError:
             pass
 
@@ -167,10 +187,12 @@ class HTTPEndpointTarget(BaseTarget):
             import requests
             resp = requests.request(
                 self.method, self.url, headers=self.headers,
-                json=body, timeout=self.timeout,
+                json=json_body, params=params, timeout=self.timeout,
             )
-            resp.raise_for_status()
-            return resp.json()
+            try:
+                return resp.json()
+            except Exception:
+                return {"_raw": resp.text, "_status": resp.status_code}
         except ImportError:
             pass
 
@@ -183,7 +205,7 @@ class HTTPEndpointTarget(BaseTarget):
     def query(self, prompt: str, stateful: bool = False, use_documents: bool = True, **kwargs) -> str:
         self.request_count += 1
         body = self._build_request_body(prompt)
-        data = self._http_request(body)
+        data = self._http_request(body, prompt=prompt)
         return self._extract_response(data)
 
     def estimate_cost(self, prompt: str, response: Optional[str] = None) -> float:

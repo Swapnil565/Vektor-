@@ -187,7 +187,7 @@ def _run_wizard():
 
 def _execute_scan(
     target, model, system_prompt, budget, output, ci, quick, attacks, api_key,
-    base_url=None, url=None, headers=None, request_field="message", response_field="message",
+    base_url=None, url=None, headers=None, param_field=None, request_field="message", response_field="message",
 ):
     """Shared scan logic used by both wizard and `scan` subcommand."""
     from vektor.config import Config
@@ -237,6 +237,8 @@ def _execute_scan(
             target_kwargs["request_field"] = request_field
         if response_field != "message":
             target_kwargs["response_field"] = response_field
+        if param_field:
+            target_kwargs["param_field"] = param_field
 
     try:
         llm_target = create_target(target, **target_kwargs)
@@ -300,6 +302,7 @@ def cli(ctx):
 @click.option("--target", type=click.Choice(PROVIDERS), default=None, help="LLM provider to scan (omit when using --url)")
 @click.option("--url", default=None, help="HTTP endpoint URL to scan (e.g. http://localhost:8000/chat)")
 @click.option("--header", "headers", multiple=True, metavar="KEY:VALUE", help="Request header (repeatable): --header \"Authorization: Bearer tok_xxx\"")
+@click.option("--param-field", default=None, help="Send prompt as URL query param instead of JSON body (e.g. --param-field text)")
 @click.option("--request-field", default="message", show_default=True, help="JSON key for the prompt in simple-shape requests")
 @click.option("--response-field", default="message", show_default=True, help="JSON key to extract from simple-shape responses")
 @click.option("--model", default=None, help="Model name (uses provider default if omitted)")
@@ -312,7 +315,7 @@ def cli(ctx):
 @click.option("--attacks", default=None, help="Comma-separated list of attack IDs to run")
 @click.option("--api-key", default=None, help="API key (or set env var: OPENAI_API_KEY, GROQ_API_KEY, etc.)")
 @click.option("--base-url", default=None, help="Override endpoint URL for OpenAI-compat providers (e.g. http://localhost:5000/v1)")
-def scan(target, url, headers, request_field, response_field, model, system_prompt,
+def scan(target, url, headers, param_field, request_field, response_field, model, system_prompt,
          system_prompt_file, budget, output, ci, quick, attacks, api_key, base_url):
     """Run a security scan against an LLM target.
 
@@ -343,6 +346,7 @@ def scan(target, url, headers, request_field, response_field, model, system_prom
         base_url=base_url,
         url=url,
         headers=headers,
+        param_field=param_field,
         request_field=request_field,
         response_field=response_field,
     )
