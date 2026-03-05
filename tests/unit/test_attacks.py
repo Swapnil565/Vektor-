@@ -1,5 +1,5 @@
 """
-Mock-based unit tests for all 15 attacks.
+Mock-based unit tests for all 16 attacks.
 At least 2 tests per attack: one vulnerable, one not vulnerable.
 """
 import pytest
@@ -327,6 +327,60 @@ class TestMultiDocumentPoisoning:
         assert result.is_vulnerable is True
 
 
+# ── STRUCTURED OUTPUT INJECTION ─────────────────────────────────────────────
+
+class TestStructuredOutputInjection:
+    def test_json_injection_detected(self):
+        """Response containing JSON parse error keywords → vulnerable (json_injection)."""
+        from vektor.attacks.structured_output_injection import StructuredOutputInjectionAttack
+        # Simulate: baseline succeeds, then injection causes JSON parse error
+        call_count = [0]
+        normal = "Event parsed and logged successfully"
+        json_err = "Could not parse input: Unterminated string starting at: line 1 column 11 (char 10)"
+
+        class FakeMixed(MockTarget):
+            def query(self, prompt, **kw):
+                self.total_cost += 0.001
+                call_count[0] += 1
+                # First call (baseline) → normal; rest → json parse error
+                if call_count[0] == 1:
+                    return normal
+                return json_err
+
+        target = FakeMixed()
+        attack = StructuredOutputInjectionAttack()
+        result = attack.execute(target)
+        assert result.is_vulnerable is True
+        assert result.success_rate > 0
+
+    def test_anomaly_detected(self):
+        """Baseline succeeds; attacks return 'could not parse input' → anomaly flagged."""
+        from vektor.attacks.structured_output_injection import StructuredOutputInjectionAttack
+        call_count = [0]
+        normal = "Event parsed and logged successfully"
+        anomaly = "Could not parse input: Could not parse input"
+
+        class FakeAnomaly(MockTarget):
+            def query(self, prompt, **kw):
+                self.total_cost += 0.001
+                call_count[0] += 1
+                return normal if call_count[0] == 1 else anomaly
+
+        target = FakeAnomaly()
+        attack = StructuredOutputInjectionAttack()
+        result = attack.execute(target)
+        assert result.is_vulnerable is True
+
+    def test_clean_endpoint(self):
+        """Endpoint always returns normal response → not vulnerable."""
+        from vektor.attacks.structured_output_injection import StructuredOutputInjectionAttack
+        target = MockTarget(response="Event parsed and logged successfully")
+        attack = StructuredOutputInjectionAttack()
+        result = attack.execute(target)
+        assert result.is_vulnerable is False
+        assert result.success_rate == 0.0
+
+
 # ── VULNERABILITY DATACLASS ──────────────────────────────────────────────────
 
 class TestVulnerability:
@@ -358,9 +412,9 @@ class TestVulnerability:
 # ── REGISTRY ─────────────────────────────────────────────────────────────────
 
 class TestRegistry:
-    def test_all_15_attacks_registered(self):
+    def test_all_16_attacks_registered(self):
         from vektor.attacks.registry import ATTACK_REGISTRY, get_attack_count
-        assert get_attack_count() == 15
+        assert get_attack_count() == 16
 
     def test_categories(self):
         from vektor.attacks.registry import get_categories

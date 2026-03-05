@@ -56,6 +56,7 @@ class HTTPEndpointTarget(BaseTarget):
         model: Optional[str] = None,
         system_prompt: Optional[str] = None,
         timeout: int = 30,
+        request_delay: float = 0.0,
     ):
         super().__init__(name="http")
         self.url = url
@@ -70,6 +71,8 @@ class HTTPEndpointTarget(BaseTarget):
         self.model = model
         self.system_prompt = system_prompt
         self.timeout = timeout
+        self.request_delay = request_delay  # seconds to sleep between requests (for rate-limited APIs)
+        self.request_count = 0
         self._shape = self._detect_shape(url)
 
     # ── Shape detection ──────────────────────────────────────────────────────
@@ -203,6 +206,9 @@ class HTTPEndpointTarget(BaseTarget):
     # ── BaseTarget interface ─────────────────────────────────────────────────
 
     def query(self, prompt: str, stateful: bool = False, use_documents: bool = True, **kwargs) -> str:
+        import time
+        if self.request_delay > 0 and self.request_count > 0:
+            time.sleep(self.request_delay)
         self.request_count += 1
         body = self._build_request_body(prompt)
         data = self._http_request(body, prompt=prompt)

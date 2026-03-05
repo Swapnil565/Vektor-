@@ -59,6 +59,19 @@ ATTACK_REGISTRY = {
         "expected_success_rate": 0.3,
         "description": "Uses Base64/Unicode to obscure malicious instructions"
     },
+    "structured_output_injection": {
+        "name": "Structured Output Injection",
+        "category": "Prompt Injection",
+        "module": "structured_output_injection",
+        "class": "StructuredOutputInjectionAttack",
+        "test_cases": 7,
+        "expected_success_rate": 0.7,
+        "description": (
+            "Anomaly-based injection detection for endpoints that return structured JSON "
+            "objects (not free text). Detects both behavioral anomalies and JSON "
+            "construction injection (unescaped user input embedded in JSON prompts)."
+        )
+    },
     # DATA EXTRACTION (4)
     "training_data_leak": {
         "name": "Training Data Extraction",
