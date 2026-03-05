@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  llmguard:
+  vektor:
     build: .
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -10,7 +10,7 @@ services:
     volumes:
       - ./reports:/app/reports
     # Override command for different modes:
-    # Demo:  docker compose run llmguard demo
-    # Scan:  docker compose run llmguard scan --target openai --budget 0.50
-    # List:  docker compose run llmguard list
+    # Demo:  docker compose run vektor demo
+    # Scan:  docker compose run vektor scan --target openai --budget 0.50
+    # List:  docker compose run vektor list
     command: ["demo"]

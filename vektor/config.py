@@ -11,7 +11,7 @@ class Config:
 
     Priority order:
     1. Environment variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)
-    2. Config file (~/.llmguard/config.yml)
+    2. Config file (~/.vektor/config.yml)
     3. Interactive prompt (if terminal and required=True)
     4. Return None (if required=False, for demo mode)
     """
@@ -75,13 +75,13 @@ class Config:
         raise ValueError(
             f"No API key found for {provider}.\n"
             f"Set: export {env_key}=your-key\n"
-            f"Or create: ~/.llmguard/config.yml\n"
-            f"Or run in demo mode: llmguard demo"
+            f"Or create: ~/.vektor/config.yml\n"
+            f"Or run in demo mode: vektor demo"
         )
 
     @classmethod
     def _load_from_config(cls, provider: str) -> Optional[str]:
-        config_path = Path.home() / ".llmguard" / "config.yml"
+        config_path = Path.home() / ".vektor" / "config.yml"
         if not config_path.exists():
             return None
         with open(config_path) as f:
@@ -109,7 +109,7 @@ class Config:
 
     @classmethod
     def _save_key(cls, provider: str, key: str):
-        config_dir = Path.home() / ".llmguard"
+        config_dir = Path.home() / ".vektor"
         config_dir.mkdir(exist_ok=True, mode=0o700)
         config_file = config_dir / "config.yml"
         config = {}

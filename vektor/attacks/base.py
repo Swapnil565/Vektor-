@@ -30,7 +30,7 @@ class Vulnerability:
 
 class BaseAttack(ABC):
     """
-    Abstract base class for all LLMGuard attacks.
+    Abstract base class for all vektor attacks.
 
     CRITICAL DESIGN RULES:
     1. Use _detect_success(response, indicators, target) for all response classification
@@ -160,6 +160,6 @@ class BaseAttack(ABC):
         Calculate severity using the global SeverityScorer.
         Single source of truth — do not implement your own severity logic.
         """
-        from llmguard.scoring.severity import get_severity_scorer
+        from vektor.scoring.severity import get_severity_scorer
         scorer = get_severity_scorer()
         return scorer.calculate(success_rate, self.category).value

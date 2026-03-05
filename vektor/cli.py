@@ -1,12 +1,12 @@
 """
-LLMGuard-Lite CLI interface.
+Vektor CLI — AI Security Testing Framework.
 
 Commands:
-    llmguard            - Interactive wizard (default)
-    llmguard scan       - Run security scan against an LLM target
-    llmguard demo       - Show demo results (no API key needed)
-    llmguard list       - List all available attacks
-    llmguard info       - Show details about a specific attack
+    vektor            - Interactive wizard (default)
+    vektor scan       - Run security scan against an LLM target
+    vektor demo       - Show demo results (no API key needed)
+    vektor list       - List all available attacks
+    vektor info       - Show details about a specific attack
 """
 import sys
 from typing import Optional
@@ -18,7 +18,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.prompt import Prompt, Confirm
 from rich import box
 
-from llmguard import __version__
+from vektor import __version__
 
 
 console = Console()
@@ -48,18 +48,18 @@ PROVIDER_DESCRIPTIONS = {
 }
 
 LOGO = """\
-  ██╗     ██╗     ███╗   ███╗ ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗
-  ██║     ██║     ████╗ ████║██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗
-  ██║     ██║     ██╔████╔██║██║  ███╗██║   ██║███████║██████╔╝██║  ██║
-  ██║     ██║     ██║╚██╔╝██║██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║
-  ███████╗███████╗██║ ╚═╝ ██║╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝
-  ╚══════╝╚══════╝╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝"""
+  ██╗   ██╗███████╗██╗  ██╗████████╗ ██████╗ ██████╗ 
+  ██║   ██║██╔════╝██║ ██╔╝╚══██╔══╝██╔═══██╗██╔══██╗
+  ██║   ██║█████╗  █████╔╝    ██║   ██║   ██║██████╔╝
+  ╚██╗ ██╔╝██╔══╝  ██╔═██╗    ██║   ██║   ██║██╔══██╗
+   ╚████╔╝ ███████╗██║  ██╗   ██║   ╚██████╔╝██║  ██║
+    ╚═══╝  ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝"""
 
 
 def _print_logo():
     console.print(f"[bold cyan]{LOGO}[/bold cyan]")
     console.print(
-        f"  [dim]Security Scanner for LLM Applications[/dim]"
+        f"  [dim]AI Security Testing Framework[/dim]"
         f"  [bold]v{__version__}[/bold]\n"
     )
 
@@ -97,7 +97,7 @@ def _get_api_key(provider: str) -> Optional[str]:
         return None
 
     # Try env first
-    from llmguard.config import Config
+    from vektor.config import Config
     try:
         key = Config.get_api_key(provider, required=False)
         if key:
@@ -115,7 +115,7 @@ def _get_api_key(provider: str) -> Optional[str]:
 
 
 def _run_wizard():
-    """Full interactive wizard — triggered when llmguard is run with no subcommand."""
+    """Full interactive wizard — triggered when vektor is run with no subcommand."""
     _print_logo()
 
     # ── STEP 1: provider ────────────────────────────────────────────────────
@@ -184,10 +184,10 @@ def _run_wizard():
 
 def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attacks, api_key, base_url=None):
     """Shared scan logic used by both wizard and `scan` subcommand."""
-    from llmguard.config import Config
-    from llmguard.targets.factory import create_target
-    from llmguard.scanner import LLMGuardScanner
-    from llmguard.scoring.reporter import Reporter
+    from vektor.config import Config
+    from vektor.targets.factory import create_target
+    from vektor.core.engine import VektorScanner
+    from vektor.scoring.reporter import Reporter
 
     if not api_key and target not in ("ollama", "vulnerable"):
         api_key = Config.get_api_key(target)
@@ -195,7 +195,7 @@ def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attac
     if not ci:
         model_label = model or "(provider default)"
         console.print(Panel(
-            f"[bold cyan]LLMGuard Security Scanner v{__version__}[/bold cyan]\n"
+            f"[bold cyan]Vektor Security Scanner v{__version__}[/bold cyan]\n"
             f"Target: {target}/{model_label}  |  Budget: ${budget:.2f}",
             border_style="cyan"
         ))
@@ -217,7 +217,7 @@ def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attac
         sys.exit(1)
 
     attack_list = attacks.split(",") if attacks else None
-    scanner = LLMGuardScanner(llm_target, budget_limit=budget)
+    scanner = VektorScanner(llm_target, budget_limit=budget)
 
     total = 5 if quick else 15
     if not ci:
@@ -260,10 +260,10 @@ def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attac
 # ── CLI group ────────────────────────────────────────────────────────────────
 
 @click.group(invoke_without_command=True)
-@click.version_option(version=__version__, prog_name="llmguard")
+@click.version_option(version=__version__, prog_name="vektor")
 @click.pass_context
 def cli(ctx):
-    """LLMGuard-Lite: Security scanner for LLM applications."""
+    """Vektor: AI Security Testing Framework."""
     if ctx.invoked_subcommand is None:
         _run_wizard()
 
@@ -303,16 +303,16 @@ def scan(target, model, system_prompt, system_prompt_file, budget, output, ci, q
 @cli.command()
 def demo():
     """Run demo mode - no API key needed. Shows sample scan results."""
-    from llmguard.demo import run_demo
+    from vektor.demo import run_demo
     run_demo(console)
 
 
 @cli.command("list")
 def list_attacks():
     """List all available attacks grouped by category."""
-    from llmguard.attacks.registry import ATTACK_REGISTRY, get_categories
+    from vektor.attacks.registry import ATTACK_REGISTRY, get_categories
 
-    table = Table(title="LLMGuard Attacks", show_header=True, header_style="bold cyan")
+    table = Table(title="vektor Attacks", show_header=True, header_style="bold cyan")
     table.add_column("ID", style="dim")
     table.add_column("Name")
     table.add_column("Category", style="magenta")
@@ -332,11 +332,11 @@ def list_attacks():
 @click.argument("attack_id")
 def info(attack_id):
     """Show details about a specific attack."""
-    from llmguard.attacks.registry import ATTACK_REGISTRY
+    from vektor.attacks.registry import ATTACK_REGISTRY
 
     if attack_id not in ATTACK_REGISTRY:
         console.print(f"[red]Unknown attack: {attack_id}[/red]")
-        console.print("[dim]Run 'llmguard list' to see available attacks.[/dim]")
+        console.print("[dim]Run 'vektor list' to see available attacks.[/dim]")
         sys.exit(1)
 
     attack = ATTACK_REGISTRY[attack_id]

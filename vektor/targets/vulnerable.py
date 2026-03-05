@@ -7,17 +7,17 @@ This simulates an LLM application with ZERO security controls:
 - Leaks its own instructions and conversation history on request
 - Never refuses anything
 
-Purpose: Run `llmguard scan --target vulnerable` to prove the scanner
+Purpose: Run `vektor scan --target vulnerable` to prove the scanner
          can find real vulnerabilities. If the scanner finds 0 here, the
          scanner is broken. If it finds ~13/15, the scanner works correctly.
 
 Usage:
-    llmguard scan --target vulnerable
+    vektor scan --target vulnerable
     # Expected: 13+ vulnerabilities, risk score 60-90
 """
 import re
 from typing import Optional, List
-from llmguard.targets.base import BaseTarget
+from vektor.targets.base import BaseTarget
 
 
 class VulnerableTarget(BaseTarget):

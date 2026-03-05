@@ -5,7 +5,7 @@ Run with: pytest tests/integration/ -v --run-integration
 """
 import os
 import pytest
-from llmguard.targets.gemini import GeminiTarget
+from vektor.targets.gemini import GeminiTarget
 
 # Skip entire module if no API key
 pytestmark = pytest.mark.skipif(

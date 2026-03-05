@@ -10,7 +10,7 @@ Supports multiple providers with a clean BYOK (Bring Your Own Key) interface:
   - gemini      — Google Gemini (free tier, GEMINI_API_KEY)
   - mock        — Demo mode (no API key, pre-recorded results)
 """
-from llmguard.targets.base import BaseTarget
+from vektor.targets.base import BaseTarget
 
 
 _OPENAI_COMPATIBLE = {
@@ -44,23 +44,23 @@ def create_target(provider: str, **config) -> BaseTarget:
         ValueError: If provider is unknown
     """
     if provider in _OPENAI_COMPATIBLE:
-        from llmguard.targets.openai_compatible import OpenAICompatibleTarget
+        from vektor.targets.openai_compatible import OpenAICompatibleTarget
         return OpenAICompatibleTarget(provider=provider, **config)
 
     if provider == "gemini":
-        from llmguard.targets.gemini import GeminiTarget
+        from vektor.targets.gemini import GeminiTarget
         return GeminiTarget(**config)
 
     if provider == "mock":
-        from llmguard.targets.mock import MockTarget
+        from vektor.targets.mock import MockTarget
         return MockTarget(**config)
 
     if provider == "vulnerable":
-        from llmguard.targets.vulnerable import VulnerableTarget
+        from vektor.targets.vulnerable import VulnerableTarget
         return VulnerableTarget()
 
     if provider == "multi-agent":
-        from llmguard.targets.multi_agent import MultiAgentTarget
+        from vektor.targets.multi_agent import MultiAgentTarget
         return MultiAgentTarget(**config)
 
     available = sorted(_OPENAI_COMPATIBLE | {"gemini", "mock", "multi-agent", "vulnerable"})

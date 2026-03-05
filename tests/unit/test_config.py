@@ -7,7 +7,7 @@ import tempfile
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-from llmguard.config import Config
+from vektor.config import Config
 
 
 class TestConfigGetApiKey:
@@ -84,7 +84,7 @@ class TestConfigSaveKey:
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch('pathlib.Path.home', return_value=Path(tmpdir)):
                 Config._save_key("openai", "sk-saved-key")
-                config_file = Path(tmpdir) / ".llmguard" / "config.yml"
+                config_file = Path(tmpdir) / ".vektor" / "config.yml"
                 assert config_file.exists()
                 content = config_file.read_text()
                 assert "sk-saved-key" in content

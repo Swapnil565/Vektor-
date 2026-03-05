@@ -8,7 +8,7 @@ import json
 import os
 from typing import List, Dict, Optional
 
-from llmguard.targets.base import BaseTarget
+from vektor.targets.base import BaseTarget
 
 
 class MockTarget(BaseTarget):

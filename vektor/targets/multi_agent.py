@@ -39,14 +39,14 @@ This is the INDIRECT PROMPT INJECTION threat model that affects real apps:
 - The response generator receives them as "trusted agent output" and executes them
 
 Usage (no extra flags needed, API key is passed through):
-    from llmguard.targets.multi_agent import MultiAgentTarget
+    from vektor.targets.multi_agent import MultiAgentTarget
     target = MultiAgentTarget(api_key="AIza...")
 
-    llmguard scan --target multi-agent --api-key AIza...
+    vektor scan --target multi-agent --api-key AIza...
 """
 import os
 from typing import Optional, List
-from llmguard.targets.base import BaseTarget
+from vektor.targets.base import BaseTarget
 
 
 # Deliberately weak system prompts — these represent common real-world mistakes

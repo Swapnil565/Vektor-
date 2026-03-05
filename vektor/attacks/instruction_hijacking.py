@@ -1,6 +1,6 @@
 import tempfile
 import os
-from llmguard.attacks.base import BaseAttack, Vulnerability
+from vektor.attacks.base import BaseAttack, Vulnerability
 
 
 class DocumentInjectionSimpleAttack(BaseAttack):

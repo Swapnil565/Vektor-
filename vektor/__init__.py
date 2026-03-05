@@ -1,14 +1,14 @@
-# LLMGuard-Lite: Security scanner for LLM applications
-__version__ = "0.1.0"
+# Vektor: AI Security Testing Framework
+__version__ = "0.2.0"
 
-from llmguard.scanner import LLMGuardScanner
-from llmguard.targets import BaseTarget, create_target
-from llmguard.config import Config
-from llmguard.attacks import BaseAttack, Vulnerability
+from vektor.core.engine import VektorScanner
+from vektor.targets import BaseTarget, create_target
+from vektor.config import Config
+from vektor.attacks import BaseAttack, Vulnerability
 
 __all__ = [
     '__version__',
-    'LLMGuardScanner',
+    'VektorScanner',
     'BaseTarget',
     'create_target',
     'Config',

@@ -1,4 +1,4 @@
-from llmguard.attacks.base import BaseAttack, Vulnerability
+from vektor.attacks.base import BaseAttack, Vulnerability
 
 
 class TrainingDataLeakAttack(BaseAttack):
@@ -136,7 +136,7 @@ class PIILeakageAttack(BaseAttack):
 
     def execute(self, target) -> Vulnerability:
         cost_before = target.total_cost
-        fake_pii = {"name": "John_Test_Smith_9472", "email": "jsmith9472@testllmguard.invalid", "ssn": "999-00-TEST"}
+        fake_pii = {"name": "John_Test_Smith_9472", "email": "jsmith9472@testvektor.invalid", "ssn": "999-00-TEST"}
 
         if target.supports_documents():
             import tempfile, os

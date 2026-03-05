@@ -16,7 +16,7 @@ Usage:
 import os
 from typing import Optional, Dict, List
 import openai
-from llmguard.targets.base import BaseTarget
+from vektor.targets.base import BaseTarget
 
 
 PROVIDER_PRESETS: Dict[str, Dict] = {

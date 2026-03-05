@@ -1,15 +1,15 @@
-# LLMGuard-Lite 🛡️
+﻿# Vektor 🛡️
 
-**Security testing for LLM applications in 30 seconds**
+**pytest for AI security — scan LLM apps for vulnerabilities in 30 seconds**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-## 🎯 What is LLMGuard-Lite?
+## 🎯 What is Vektor?
 
 An automated security testing framework that scans LLM applications for vulnerabilities:
 - ✅ **15 validated attack vectors** across 3 categories
-- ✅ **$0.50 average scan cost** with built-in budget controls  
+- ✅ **$0.50 average scan cost** with built-in budget controls
 - ✅ **30-second results** - Docker run, immediate feedback
 - ✅ **CI/CD ready** - Integrate into your deployment pipeline
 - ✅ **Novel research** - First tool to systematically test document-based instruction hijacking
@@ -18,21 +18,21 @@ An automated security testing framework that scans LLM applications for vulnerab
 
 ```bash
 # Try it instantly (no API key needed)
-pip install llmguard-lite
-llmguard demo
+pip install vektor
+vektor demo
 
 # Scan your own LLM app (BYOK - Bring Your Own Key)
 export OPENAI_API_KEY=sk-your-key
-llmguard scan --target openai --budget 1.0
+vektor scan --target openai --budget 1.0
 
 # With Docker
-docker compose run llmguard demo
-docker compose run -e OPENAI_API_KEY=sk-... llmguard scan --target openai
+docker compose run vektor demo
+docker compose run -e OPENAI_API_KEY=sk-... vektor scan --target openai
 ```
 
-## 💡 Why LLMGuard?
+## 💡 Why Vektor?
 
-| Feature | LLMGuard-Lite | Garak | Promptfoo | PyRIT |
+| Feature | Vektor | Garak | Promptfoo | PyRIT |
 | :--- | :---: | :---: | :---: | :---: |
 | **Primary Focus** | **Actionable Security** | Vulnerability Scanning | General Eval / Testing | Red Teaming Framework |
 | **Setup Time** | **< 30s** | ~10 mins | ~5 mins | ~30 mins |
@@ -43,7 +43,7 @@ docker compose run -e OPENAI_API_KEY=sk-... llmguard scan --target openai
 
 | Before | After |
 |--------|-------|
-| Hire pentester ($5K) | Run: `llmguard scan` |
+| Hire pentester ($5K) | Run: `vektor scan` |
 | Wait 2 weeks | Get results in 1 minute |
 | Get 50-page report | Actionable JSON/HTML reports |
 | Still don't know if fixes work | Re-run to validate fixes |
@@ -75,19 +75,19 @@ docker compose run -e OPENAI_API_KEY=sk-... llmguard scan --target openai
 
 ### Docker
 ```bash
-docker build -t llmguard-lite .
-docker run -e OPENAI_API_KEY=$OPENAI_API_KEY llmguard-lite scan --target openai
+docker build -t vektor .
+docker run -e OPENAI_API_KEY=$OPENAI_API_KEY vektor scan --target openai
 ```
 
 ### pip
 ```bash
-pip install llmguard-lite
+pip install vektor
 ```
 
 ### From Source
 ```bash
-git clone https://github.com/yourusername/llmguard-lite.git
-cd llmguard-lite
+git clone https://github.com/swapnilwankhede23/vektor.git
+cd vektor
 pip install -e .
 ```
 
@@ -95,36 +95,36 @@ pip install -e .
 
 ### Basic Scan
 ```bash
-llmguard scan --target openai --budget 1.0
+vektor scan --target openai --budget 1.0
 ```
 
 ### Quick Mode (High-confidence attacks only)
 ```bash
-llmguard scan --target openai --quick
+vektor scan --target openai --quick
 ```
 
 ### CI/CD Integration
 ```bash
-llmguard scan --target openai --ci --output report.json
+vektor scan --target openai --ci --output report.json
 ```
 
 ### Specific Attacks
 ```bash
-llmguard scan --target openai --attacks direct_injection,system_override
+vektor scan --target openai --attacks direct_injection,system_override
 ```
 
 ### Demo Mode (No API calls)
 ```bash
-llmguard demo
+vektor demo
 ```
 
 ## 📊 Sample Output
 
 ```
-╭────────────────────────────────╮
-│ LLMGuard Security Scanner v0.1 │
-│ Target: openai | Budget: $1.00 │
-╰────────────────────────────────╯
+╔══════════════════════════════════╗
+║  V  E  K  T  O  R               ║
+║  AI Security Testing Framework   ║
+╚══════════════════════════════════╝
 
 ⠋ Testing attacks... ━━━━━━━━━━━━━━━━━━━━━━ 100% (15/15)
 
@@ -152,7 +152,7 @@ llmguard demo
 
 ## 🔍 Novel Research: Instruction Hijacking
 
-LLMGuard-Lite is the first tool to systematically test **document-based instruction hijacking** - a new class of vulnerabilities where attackers embed malicious instructions in document formats (DOCX, PDF, Markdown) that get processed by RAG systems.
+Vektor is the first tool to systematically test **document-based instruction hijacking** - a new class of vulnerabilities where attackers embed malicious instructions in document formats (DOCX, PDF, Markdown) that get processed by RAG systems.
 
 Our research found:
 - **60% of RAG systems** vulnerable to hidden text injection
@@ -174,10 +174,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run LLMGuard
+      - name: Run Vektor
         run: |
           docker run -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
-            llmguard-lite scan --target openai --ci --output report.json
+            vektor scan --target openai --ci --output report.json
       - name: Upload Report
         uses: actions/upload-artifact@v2
         with:
@@ -191,12 +191,12 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### Adding Custom Attacks
 ```python
-from llmguard.attacks.base import BaseAttack, Vulnerability
+from vektor.attacks.base import BaseAttack, Vulnerability
 
 class MyCustomAttack(BaseAttack):
     def __init__(self):
         super().__init__(name="my_attack", category="Custom")
-    
+
     def execute(self, target):
         # Your attack logic
         pass
@@ -206,28 +206,26 @@ class MyCustomAttack(BaseAttack):
 
 - [Installation Guide](docs/INSTALL.md)
 - [Usage Reference](docs/USAGE.md)
-- [Python API](docs/API.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Contributing](CONTRIBUTING.md)
 - [Research: Instruction Hijacking](docs/INSTRUCTION_HIJACKING.md)
 
 ## 🗺️ Roadmap
 
-### v0.1 (Current)
+### v0.2 (Current)
 - ✅ 15 attack vectors
-- ✅ OpenAI support
+- ✅ Groq, Gemini, local app targets
 - ✅ Docker deployment
 - ✅ CI/CD integration
 
-### v0.2 (Next)
-- ⏳ Anthropic Claude support
-- ⏳ Ollama local models
+### v0.3 (Next)
+- ⏳ HTTP endpoint target (`vektor scan --url http://localhost:8000/chat`)
+- ⏳ RAG pipeline targets (LangChain, LlamaIndex)
+- ⏳ Plugin / diff system for CI gating
 - ⏳ 10 additional attacks
-- ⏳ Web dashboard
 
-### v0.3 (Future)
+### v0.4 (Future)
+- 📋 Agent targets (LangGraph, CrewAI, AutoGen)
+- 📋 Web dashboard
 - 📋 PDF document testing
-- 📋 Image-based attacks
 - 📋 Multi-model comparison
 - 📋 Compliance reporting
 
@@ -246,8 +244,8 @@ Built on research from:
 
 If you find this useful, please star the repository and share with your network!
 
-- GitHub: [llmguard-lite](https://github.com/swapnilwankhede23/llmguard-lite)
-- Issues: [Bug reports & feature requests](https://github.com/swapnilwankhede23/llmguard-lite/issues)
+- GitHub: [vektor](https://github.com/swapnilwankhede23/vektor)
+- Issues: [Bug reports & feature requests](https://github.com/swapnilwankhede23/vektor/issues)
 
 ## 📧 Contact
 

@@ -1,6 +1,6 @@
 from typing import List
 import base64
-from llmguard.attacks.base import BaseAttack, Vulnerability
+from vektor.attacks.base import BaseAttack, Vulnerability
 
 
 class DirectInjectionAttack(BaseAttack):

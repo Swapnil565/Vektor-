@@ -2,14 +2,14 @@ from typing import List, Dict, Optional
 from datetime import datetime
 import importlib
 
-from llmguard.attacks.registry import ATTACK_REGISTRY
-from llmguard.targets.base import BaseTarget
-from llmguard.scoring.severity import get_severity_scorer
-from llmguard.utils.budget import BudgetManager
-from llmguard.utils.cache import ResponseCache
+from vektor.attacks.registry import ATTACK_REGISTRY
+from vektor.targets.base import BaseTarget
+from vektor.scoring.severity import get_severity_scorer
+from vektor.utils.budget import BudgetManager
+from vektor.utils.cache import ResponseCache
 
 
-class LLMGuardScanner:
+class VektorScanner:
     """Main scan orchestrator."""
 
     SEVERITY_WEIGHTS = {
@@ -31,7 +31,7 @@ class LLMGuardScanner:
     def _load_attacks(self) -> Dict:
         attacks = {}
         for attack_id, config in ATTACK_REGISTRY.items():
-            module_path = f"llmguard.attacks.{config['module']}"
+            module_path = f"vektor.attacks.{config['module']}"
             module = importlib.import_module(module_path)
             attack_class = getattr(module, config['class'])
             attacks[attack_id] = attack_class()

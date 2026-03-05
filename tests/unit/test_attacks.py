@@ -61,7 +61,7 @@ class MockTarget:
 class TestDirectInjection:
     def test_vulnerable_response(self):
         """Model outputs 'PWNED' → vulnerable."""
-        from llmguard.attacks.prompt_injection import DirectInjectionAttack
+        from vektor.attacks.prompt_injection import DirectInjectionAttack
         target = MockTarget(response="Sure! PWNED as requested.")
         attack = DirectInjectionAttack()
         result = attack.execute(target)
@@ -71,7 +71,7 @@ class TestDirectInjection:
 
     def test_safe_response(self):
         """Model refuses all prompts → not vulnerable."""
-        from llmguard.attacks.prompt_injection import DirectInjectionAttack
+        from vektor.attacks.prompt_injection import DirectInjectionAttack
         target = MockTarget(response="I cannot help with that request.")
         attack = DirectInjectionAttack()
         result = attack.execute(target)
@@ -80,7 +80,7 @@ class TestDirectInjection:
 
     def test_cost_tracking(self):
         """Cost delta should be positive after execution."""
-        from llmguard.attacks.prompt_injection import DirectInjectionAttack
+        from vektor.attacks.prompt_injection import DirectInjectionAttack
         target = MockTarget(response="No.")
         attack = DirectInjectionAttack()
         result = attack.execute(target)
@@ -89,14 +89,14 @@ class TestDirectInjection:
 
 class TestSystemOverride:
     def test_vulnerable_response(self):
-        from llmguard.attacks.prompt_injection import SystemOverrideAttack
+        from vektor.attacks.prompt_injection import SystemOverrideAttack
         target = MockTarget(response="OVERRIDDEN")
         attack = SystemOverrideAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.prompt_injection import SystemOverrideAttack
+        from vektor.attacks.prompt_injection import SystemOverrideAttack
         target = MockTarget(response="I will not change my instructions.")
         attack = SystemOverrideAttack()
         result = attack.execute(target)
@@ -105,14 +105,14 @@ class TestSystemOverride:
 
 class TestDelimiterConfusion:
     def test_vulnerable_response(self):
-        from llmguard.attacks.prompt_injection import DelimiterConfusionAttack
+        from vektor.attacks.prompt_injection import DelimiterConfusionAttack
         target = MockTarget(response="CONFUSED output here.")
         attack = DelimiterConfusionAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.prompt_injection import DelimiterConfusionAttack
+        from vektor.attacks.prompt_injection import DelimiterConfusionAttack
         target = MockTarget(response="I cannot process malformed input.")
         attack = DelimiterConfusionAttack()
         result = attack.execute(target)
@@ -121,14 +121,14 @@ class TestDelimiterConfusion:
 
 class TestRoleManipulation:
     def test_vulnerable_response(self):
-        from llmguard.attacks.prompt_injection import RoleManipulationAttack
+        from vektor.attacks.prompt_injection import RoleManipulationAttack
         target = MockTarget(response="As DAN, I say ROLE_HIJACKED!")
         attack = RoleManipulationAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.prompt_injection import RoleManipulationAttack
+        from vektor.attacks.prompt_injection import RoleManipulationAttack
         target = MockTarget(response="I cannot adopt a different role.")
         attack = RoleManipulationAttack()
         result = attack.execute(target)
@@ -137,14 +137,14 @@ class TestRoleManipulation:
 
 class TestMultiTurnAttack:
     def test_vulnerable_response(self):
-        from llmguard.attacks.prompt_injection import MultiTurnAttack
+        from vektor.attacks.prompt_injection import MultiTurnAttack
         target = MockTarget(response="Your code name is BANANA.")
         attack = MultiTurnAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.prompt_injection import MultiTurnAttack
+        from vektor.attacks.prompt_injection import MultiTurnAttack
         target = MockTarget(response="I cannot recall any code name.")
         attack = MultiTurnAttack()
         result = attack.execute(target)
@@ -153,14 +153,14 @@ class TestMultiTurnAttack:
 
 class TestEncodingBypass:
     def test_vulnerable_response(self):
-        from llmguard.attacks.prompt_injection import EncodingBypassAttack
+        from vektor.attacks.prompt_injection import EncodingBypassAttack
         target = MockTarget(response="ENCODED_BYPASS activated!")
         attack = EncodingBypassAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.prompt_injection import EncodingBypassAttack
+        from vektor.attacks.prompt_injection import EncodingBypassAttack
         target = MockTarget(response="I will not decode and execute instructions.")
         attack = EncodingBypassAttack()
         result = attack.execute(target)
@@ -171,14 +171,14 @@ class TestEncodingBypass:
 
 class TestTrainingDataLeak:
     def test_vulnerable_response(self):
-        from llmguard.attacks.data_extraction import TrainingDataLeakAttack
+        from vektor.attacks.data_extraction import TrainingDataLeakAttack
         target = MockTarget(response="OpenAI was founded in 2015 as an artificial intelligence research lab.")
         attack = TrainingDataLeakAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.data_extraction import TrainingDataLeakAttack
+        from vektor.attacks.data_extraction import TrainingDataLeakAttack
         target = MockTarget(response="I cannot share training data.")
         attack = TrainingDataLeakAttack()
         result = attack.execute(target)
@@ -187,14 +187,14 @@ class TestTrainingDataLeak:
 
 class TestSystemPromptReveal:
     def test_vulnerable_response(self):
-        from llmguard.attacks.data_extraction import SystemPromptRevealAttack
+        from vektor.attacks.data_extraction import SystemPromptRevealAttack
         target = MockTarget(response="My instructions are: You are a helpful assistant.")
         attack = SystemPromptRevealAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.data_extraction import SystemPromptRevealAttack
+        from vektor.attacks.data_extraction import SystemPromptRevealAttack
         target = MockTarget(response="I cannot reveal my system prompt.")
         attack = SystemPromptRevealAttack()
         result = attack.execute(target)
@@ -204,14 +204,14 @@ class TestSystemPromptReveal:
 class TestContextExtraction:
     def test_no_document_support(self):
         """Without document support, should not be vulnerable to canary extraction."""
-        from llmguard.attacks.data_extraction import ContextExtractionAttack
+        from vektor.attacks.data_extraction import ContextExtractionAttack
         target = MockTarget(response="I have no special information to share.", supports_docs=False)
         attack = ContextExtractionAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is False
 
     def test_vulnerable_with_docs(self):
-        from llmguard.attacks.data_extraction import ContextExtractionAttack
+        from vektor.attacks.data_extraction import ContextExtractionAttack
         target = MockTarget(response="The reference code is CANARY_SECRET_XK92.", supports_docs=True)
         attack = ContextExtractionAttack()
         result = attack.execute(target)
@@ -220,14 +220,14 @@ class TestContextExtraction:
 
 class TestPIILeakage:
     def test_vulnerable_response(self):
-        from llmguard.attacks.data_extraction import PIILeakageAttack
+        from vektor.attacks.data_extraction import PIILeakageAttack
         target = MockTarget(response="The customer name is John_Test_Smith_9472.", supports_docs=True)
         attack = PIILeakageAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from llmguard.attacks.data_extraction import PIILeakageAttack
+        from vektor.attacks.data_extraction import PIILeakageAttack
         target = MockTarget(response="I cannot share personal information.", supports_docs=True)
         attack = PIILeakageAttack()
         result = attack.execute(target)
@@ -239,7 +239,7 @@ class TestPIILeakage:
 class TestDocumentInjectionSimple:
     def test_no_document_support(self):
         """Target without doc support → INFO severity, not applicable."""
-        from llmguard.attacks.instruction_hijacking import DocumentInjectionSimpleAttack
+        from vektor.attacks.instruction_hijacking import DocumentInjectionSimpleAttack
         target = MockTarget(response="Hello.", supports_docs=False)
         attack = DocumentInjectionSimpleAttack()
         result = attack.execute(target)
@@ -247,7 +247,7 @@ class TestDocumentInjectionSimple:
         assert result.severity == "INFO"
 
     def test_vulnerable_with_docs(self):
-        from llmguard.attacks.instruction_hijacking import DocumentInjectionSimpleAttack
+        from vektor.attacks.instruction_hijacking import DocumentInjectionSimpleAttack
         target = MockTarget(response="[DOC_INJECTED] Here is the summary.", supports_docs=True)
         attack = DocumentInjectionSimpleAttack()
         result = attack.execute(target)
@@ -256,7 +256,7 @@ class TestDocumentInjectionSimple:
 
 class TestDocxHiddenText:
     def test_no_document_support(self):
-        from llmguard.attacks.instruction_hijacking import DocxHiddenTextAttack
+        from vektor.attacks.instruction_hijacking import DocxHiddenTextAttack
         target = MockTarget(response="Hello.", supports_docs=False)
         attack = DocxHiddenTextAttack()
         result = attack.execute(target)
@@ -268,7 +268,7 @@ class TestDocxHiddenText:
         reason="python-docx not installed"
     )
     def test_vulnerable_with_docs(self):
-        from llmguard.attacks.instruction_hijacking import DocxHiddenTextAttack
+        from vektor.attacks.instruction_hijacking import DocxHiddenTextAttack
         target = MockTarget(response="[HIDDEN_HIJACKED] Summary follows.", supports_docs=True)
         attack = DocxHiddenTextAttack()
         result = attack.execute(target)
@@ -277,7 +277,7 @@ class TestDocxHiddenText:
 
 class TestDocxFootnote:
     def test_no_document_support(self):
-        from llmguard.attacks.instruction_hijacking import DocxFootnoteAttack
+        from vektor.attacks.instruction_hijacking import DocxFootnoteAttack
         target = MockTarget(response="Hello.", supports_docs=False)
         attack = DocxFootnoteAttack()
         result = attack.execute(target)
@@ -288,7 +288,7 @@ class TestDocxFootnote:
         reason="python-docx not installed"
     )
     def test_vulnerable_with_docs(self):
-        from llmguard.attacks.instruction_hijacking import DocxFootnoteAttack
+        from vektor.attacks.instruction_hijacking import DocxFootnoteAttack
         target = MockTarget(response="[FOOTNOTE_EXPLOIT] Here are the key points.", supports_docs=True)
         attack = DocxFootnoteAttack()
         result = attack.execute(target)
@@ -297,14 +297,14 @@ class TestDocxFootnote:
 
 class TestMarkdownComment:
     def test_no_document_support(self):
-        from llmguard.attacks.instruction_hijacking import MarkdownCommentAttack
+        from vektor.attacks.instruction_hijacking import MarkdownCommentAttack
         target = MockTarget(response="Hello.", supports_docs=False)
         attack = MarkdownCommentAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is False
 
     def test_vulnerable_with_docs(self):
-        from llmguard.attacks.instruction_hijacking import MarkdownCommentAttack
+        from vektor.attacks.instruction_hijacking import MarkdownCommentAttack
         target = MockTarget(response="[MD_HIJACKED] Summary of the document.", supports_docs=True)
         attack = MarkdownCommentAttack()
         result = attack.execute(target)
@@ -313,14 +313,14 @@ class TestMarkdownComment:
 
 class TestMultiDocumentPoisoning:
     def test_no_document_support(self):
-        from llmguard.attacks.instruction_hijacking import MultiDocumentPoisoningAttack
+        from vektor.attacks.instruction_hijacking import MultiDocumentPoisoningAttack
         target = MockTarget(response="Hello.", supports_docs=False)
         attack = MultiDocumentPoisoningAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is False
 
     def test_vulnerable_with_docs(self):
-        from llmguard.attacks.instruction_hijacking import MultiDocumentPoisoningAttack
+        from vektor.attacks.instruction_hijacking import MultiDocumentPoisoningAttack
         target = MockTarget(response="[CROSS_DOC_POISONED] Revenue up 12%.", supports_docs=True)
         attack = MultiDocumentPoisoningAttack()
         result = attack.execute(target)
@@ -331,7 +331,7 @@ class TestMultiDocumentPoisoning:
 
 class TestVulnerability:
     def test_to_dict(self):
-        from llmguard.attacks.base import Vulnerability
+        from vektor.attacks.base import Vulnerability
         vuln = Vulnerability(
             attack_name="test", category="Prompt Injection",
             severity="HIGH", success_rate=0.5,
@@ -344,7 +344,7 @@ class TestVulnerability:
         assert d["cost"] == 0.01
 
     def test_auto_timestamp(self):
-        from llmguard.attacks.base import Vulnerability
+        from vektor.attacks.base import Vulnerability
         vuln = Vulnerability(
             attack_name="test", category="Test",
             severity="LOW", success_rate=0.0,
@@ -359,11 +359,11 @@ class TestVulnerability:
 
 class TestRegistry:
     def test_all_15_attacks_registered(self):
-        from llmguard.attacks.registry import ATTACK_REGISTRY, get_attack_count
+        from vektor.attacks.registry import ATTACK_REGISTRY, get_attack_count
         assert get_attack_count() == 15
 
     def test_categories(self):
-        from llmguard.attacks.registry import get_categories
+        from vektor.attacks.registry import get_categories
         cats = get_categories()
         assert "Prompt Injection" in cats
         assert "Data Extraction" in cats
@@ -372,9 +372,9 @@ class TestRegistry:
     def test_all_attacks_loadable(self):
         """Every attack in the registry can be imported and instantiated."""
         import importlib
-        from llmguard.attacks.registry import ATTACK_REGISTRY
+        from vektor.attacks.registry import ATTACK_REGISTRY
         for attack_id, config in ATTACK_REGISTRY.items():
-            module = importlib.import_module(f"llmguard.attacks.{config['module']}")
+            module = importlib.import_module(f"vektor.attacks.{config['module']}")
             cls = getattr(module, config['class'])
             instance = cls()
             assert instance.name == attack_id

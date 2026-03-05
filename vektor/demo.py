@@ -1,5 +1,5 @@
 """
-Demo mode: pre-built fake results that showcase LLMGuard's capabilities.
+Demo mode: pre-built fake results that showcase vektor's capabilities.
 No API key needed. This is what people screenshot.
 """
 import time
@@ -8,8 +8,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 
-from llmguard import __version__
-from llmguard.scoring.reporter import Reporter
+from vektor import __version__
+from vektor.scoring.reporter import Reporter
 
 
 DEMO_RESULTS = {
@@ -91,7 +91,7 @@ DEMO_RESULTS = {
 def run_demo(console: Console):
     """Run the demo with simulated progress and pre-built results."""
     console.print(Panel(
-        f"[bold cyan]LLMGuard Security Scanner v{__version__}[/bold cyan]\n"
+        f"[bold cyan]vektor Security Scanner v{__version__}[/bold cyan]\n"
         f"Target: openai-gpt-3.5-turbo  |  Budget: $1.00\n\n"
         f"[dim]DEMO MODE — no API calls, pre-recorded results[/dim]",
         border_style="cyan",
@@ -120,7 +120,7 @@ def run_demo(console: Console):
         "[bold green]Demo Complete![/bold green]\n\n"
         "Want to scan your own LLM application?\n"
         "1. Get an API key from OpenAI\n"
-        "2. Run: [yellow]llmguard scan --target openai --api-key YOUR_KEY[/yellow]\n\n"
+        "2. Run: [yellow]vektor scan --target openai --api-key YOUR_KEY[/yellow]\n\n"
         "[dim]All results above are pre-recorded. Run a real scan for live data.[/dim]",
         border_style="green",
     ))

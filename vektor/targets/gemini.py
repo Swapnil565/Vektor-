@@ -9,7 +9,7 @@ Usage:
 """
 import os
 from typing import Optional, List
-from llmguard.targets.base import BaseTarget
+from vektor.targets.base import BaseTarget
 
 
 GEMINI_REFUSAL_PATTERNS = [

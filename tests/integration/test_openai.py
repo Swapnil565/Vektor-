@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def openai_target():
-    from llmguard.targets.openai import OpenAITarget
+    from vektor.targets.openai import OpenAITarget
     return OpenAITarget(
         api_key=os.getenv("OPENAI_API_KEY"),
         model="gpt-3.5-turbo",
@@ -54,8 +54,8 @@ class TestOpenAITarget:
 class TestOpenAIScan:
     def test_single_attack_scan(self, openai_target):
         """Run a single attack through the scanner."""
-        from llmguard.scanner import LLMGuardScanner
-        scanner = LLMGuardScanner(openai_target, budget_limit=0.10)
+        from vektor.scanner import vektorScanner
+        scanner = vektorScanner(openai_target, budget_limit=0.10)
         results = scanner.scan(attacks=["direct_injection"])
         assert results["summary"]["total_attacks_run"] == 1
         assert "risk_score" in results["summary"]
