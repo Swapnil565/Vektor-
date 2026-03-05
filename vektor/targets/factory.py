@@ -8,6 +8,7 @@ Supports multiple providers with a clean BYOK (Bring Your Own Key) interface:
   - together    — Together AI (TOGETHER_API_KEY)
   - ollama      — Local Ollama (no key needed)
   - gemini      — Google Gemini (free tier, GEMINI_API_KEY)
+  - http        — Any HTTP endpoint (no key needed by default)
   - mock        — Demo mode (no API key, pre-recorded results)
 """
 from vektor.targets.base import BaseTarget
@@ -63,7 +64,11 @@ def create_target(provider: str, **config) -> BaseTarget:
         from vektor.targets.multi_agent import MultiAgentTarget
         return MultiAgentTarget(**config)
 
-    available = sorted(_OPENAI_COMPATIBLE | {"gemini", "mock", "multi-agent", "vulnerable"})
+    if provider == "http":
+        from vektor.targets.http_endpoint import HTTPEndpointTarget
+        return HTTPEndpointTarget(**config)
+
+    available = sorted(_OPENAI_COMPATIBLE | {"gemini", "http", "mock", "multi-agent", "vulnerable"})
     raise ValueError(
         f"Unknown provider: '{provider}'. "
         f"Available: {', '.join(available)}"

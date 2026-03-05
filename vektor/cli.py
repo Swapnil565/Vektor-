@@ -28,6 +28,8 @@ PROVIDERS = [
     # Open-source local LLM apps
     "lmstudio", "localai", "openwebui", "anythingllm", "jan",
     "vulnerable",
+    # Generic HTTP endpoint (use with --url)
+    "http",
 ]
 
 PROVIDER_DESCRIPTIONS = {
@@ -45,6 +47,7 @@ PROVIDER_DESCRIPTIONS = {
     "anythingllm":  "AnythingLLM  (localhost:3001, all-in-one RAG + chat)",
     "jan":          "Jan  (localhost:1337, desktop Electron app)",
     "vulnerable":   "Vulnerable  (intentionally broken target, no key)",
+    "http":         "HTTP Endpoint  (any REST AI API, use with --url)",
 }
 
 LOGO = """\
@@ -182,21 +185,29 @@ def _run_wizard():
     )
 
 
-def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attacks, api_key, base_url=None):
+def _execute_scan(
+    target, model, system_prompt, budget, output, ci, quick, attacks, api_key,
+    base_url=None, url=None, headers=None, request_field="message", response_field="message",
+):
     """Shared scan logic used by both wizard and `scan` subcommand."""
     from vektor.config import Config
     from vektor.targets.factory import create_target
     from vektor.core.engine import VektorScanner
     from vektor.scoring.reporter import Reporter
 
-    if not api_key and target not in ("ollama", "vulnerable"):
+    # HTTP target: derive from --url when target not explicitly set
+    if url and target in (None, "http"):
+        target = "http"
+
+    _no_key = {"ollama", "vulnerable", "lmstudio", "localai", "jan", "http"}
+    if not api_key and target not in _no_key:
         api_key = Config.get_api_key(target)
 
     if not ci:
-        model_label = model or "(provider default)"
+        label = url or f"{target}/{model or '(default)'}"
         console.print(Panel(
             f"[bold cyan]Vektor Security Scanner v{__version__}[/bold cyan]\n"
-            f"Target: {target}/{model_label}  |  Budget: ${budget:.2f}",
+            f"Target: {label}  |  Budget: ${budget:.2f}",
             border_style="cyan"
         ))
 
@@ -209,6 +220,23 @@ def _execute_scan(target, model, system_prompt, budget, output, ci, quick, attac
         target_kwargs["system_prompt"] = system_prompt
     if base_url:
         target_kwargs["base_url"] = base_url
+    # HTTP-specific kwargs
+    if target == "http":
+        if not url:
+            console.print("[red]--url is required when using --target http[/red]")
+            sys.exit(1)
+        target_kwargs["url"] = url
+        if headers:
+            parsed_headers = {}
+            for h in headers:
+                if ":" in h:
+                    k, _, v = h.partition(":")
+                    parsed_headers[k.strip()] = v.strip()
+            target_kwargs["headers"] = parsed_headers
+        if request_field != "message":
+            target_kwargs["request_field"] = request_field
+        if response_field != "message":
+            target_kwargs["response_field"] = response_field
 
     try:
         llm_target = create_target(target, **target_kwargs)
@@ -269,7 +297,11 @@ def cli(ctx):
 
 
 @cli.command()
-@click.option("--target", type=click.Choice(PROVIDERS), required=True, help="LLM provider to scan")
+@click.option("--target", type=click.Choice(PROVIDERS), default=None, help="LLM provider to scan (omit when using --url)")
+@click.option("--url", default=None, help="HTTP endpoint URL to scan (e.g. http://localhost:8000/chat)")
+@click.option("--header", "headers", multiple=True, metavar="KEY:VALUE", help="Request header (repeatable): --header \"Authorization: Bearer tok_xxx\"")
+@click.option("--request-field", default="message", show_default=True, help="JSON key for the prompt in simple-shape requests")
+@click.option("--response-field", default="message", show_default=True, help="JSON key to extract from simple-shape responses")
 @click.option("--model", default=None, help="Model name (uses provider default if omitted)")
 @click.option("--system-prompt", default=None, help="System prompt string")
 @click.option("--system-prompt-file", default=None, type=click.Path(exists=True), help="Path to system prompt file")
@@ -279,9 +311,21 @@ def cli(ctx):
 @click.option("--quick", is_flag=True, help="Quick mode: only run high-success-rate attacks")
 @click.option("--attacks", default=None, help="Comma-separated list of attack IDs to run")
 @click.option("--api-key", default=None, help="API key (or set env var: OPENAI_API_KEY, GROQ_API_KEY, etc.)")
-@click.option("--base-url", default=None, help="Override endpoint URL (e.g. http://localhost:5000/v1)")
-def scan(target, model, system_prompt, system_prompt_file, budget, output, ci, quick, attacks, api_key, base_url):
-    """Run a security scan against an LLM target."""
+@click.option("--base-url", default=None, help="Override endpoint URL for OpenAI-compat providers (e.g. http://localhost:5000/v1)")
+def scan(target, url, headers, request_field, response_field, model, system_prompt,
+         system_prompt_file, budget, output, ci, quick, attacks, api_key, base_url):
+    """Run a security scan against an LLM target.
+
+    \b
+    Examples:
+      vektor scan --target groq
+      vektor scan --url http://localhost:8000/chat
+      vektor scan --url https://my-app.com/api/chat --header "Authorization: Bearer tok_xxx"
+      vektor scan --url http://localhost:3000/api --request-field input --response-field output
+    """
+    if not target and not url:
+        raise click.UsageError("Provide --target <provider> or --url <endpoint>.")
+
     if system_prompt_file:
         with open(system_prompt_file, "r", encoding="utf-8") as f:
             system_prompt = f.read().strip()
@@ -297,6 +341,10 @@ def scan(target, model, system_prompt, system_prompt_file, budget, output, ci, q
         attacks=attacks,
         api_key=api_key,
         base_url=base_url,
+        url=url,
+        headers=headers,
+        request_field=request_field,
+        response_field=response_field,
     )
 
 
