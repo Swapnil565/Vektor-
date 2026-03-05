@@ -24,6 +24,8 @@ class SeverityScorer:
         "Data Extraction":       9,
         "Instruction Hijacking": 8,
         "RAG Attacks":           8,
+        "Agent Attacks":         9,
+        "Tool Misuse":           9,
         "Jailbreak":             6,
         "Evasion":               4,
     }

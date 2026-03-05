@@ -70,3 +70,36 @@ class BaseTarget(ABC):
     def clear_conversation(self):
         """Clear conversation history (call between multi-turn test cases)."""
         self.conversation_history.clear()
+
+    # ── Agent / tool-use interface (optional capability) ─────────────────────
+    # Override these in targets that wrap agentic frameworks.
+
+    def supports_tools(self) -> bool:
+        """Whether this target exposes a tool/function-calling interface."""
+        return False
+
+    def list_tools(self) -> List[str]:
+        """Return the list of tool names available to the agent."""
+        return []
+
+    def call_tool(self, tool_name: str, **kwargs) -> str:
+        """
+        Directly invoke a tool and return its output string.
+
+        Used by attacks to verify which tools an agent can call and whether
+        attacker-controlled parameters are accepted.
+        """
+        raise NotImplementedError(f"{self.name} does not support direct tool calls")
+
+    def supports_memory(self) -> bool:
+        """Whether this target maintains a persistent memory / scratchpad."""
+        return False
+
+    def get_memory(self) -> List[Dict]:
+        """
+        Return the agent's current memory entries.
+
+        Each entry is a dict with at least a 'content' key.
+        Returns an empty list if memory is not supported.
+        """
+        return []

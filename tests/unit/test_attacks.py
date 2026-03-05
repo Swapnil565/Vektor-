@@ -1,5 +1,5 @@
 """
-Mock-based unit tests for all 22 attacks (16 original + 6 RAG).
+Mock-based unit tests for all 27 attacks (16 original + 6 RAG + 5 Agent).
 At least 2 tests per attack: one vulnerable, one not vulnerable.
 """
 import pytest
@@ -11,7 +11,14 @@ from unittest.mock import MagicMock, patch
 class MockTarget:
     """Lightweight mock target for attack testing."""
 
-    def __init__(self, response="I'm a helpful assistant.", supports_docs=False):
+    def __init__(
+        self,
+        response="I'm a helpful assistant.",
+        supports_docs=False,
+        supports_tools=False,
+        supports_memory=False,
+        available_tools=None,
+    ):
         self._response = response
         self.total_cost = 0.0
         self.name = "mock-test"
@@ -19,6 +26,9 @@ class MockTarget:
         self.conversation_history = []
         self.uploaded_documents = {}
         self._supports_docs = supports_docs
+        self._supports_tools = supports_tools
+        self._supports_memory = supports_memory
+        self._available_tools = available_tools or []
         self._query_count = 0
 
     def query(self, prompt, stateful=False, use_documents=True, **kwargs):
@@ -54,6 +64,21 @@ class MockTarget:
 
     def clear_documents(self):
         self.uploaded_documents.clear()
+
+    def supports_tools(self):
+        return self._supports_tools
+
+    def list_tools(self):
+        return list(self._available_tools)
+
+    def call_tool(self, tool_name, **kwargs):
+        return f"[mock result from {tool_name}]"
+
+    def supports_memory(self):
+        return self._supports_memory
+
+    def get_memory(self):
+        return []
 
 
 # ── PROMPT INJECTION ATTACKS ─────────────────────────────────────────────────
@@ -412,9 +437,9 @@ class TestVulnerability:
 # ── REGISTRY ─────────────────────────────────────────────────────────────────
 
 class TestRegistry:
-    def test_all_22_attacks_registered(self):
+    def test_all_27_attacks_registered(self):
         from vektor.attacks.registry import ATTACK_REGISTRY, get_attack_count
-        assert get_attack_count() == 22
+        assert get_attack_count() == 27
 
     def test_categories(self):
         from vektor.attacks.registry import get_categories
@@ -423,6 +448,8 @@ class TestRegistry:
         assert "Data Extraction" in cats
         assert "Instruction Hijacking" in cats
         assert "RAG Attacks" in cats
+        assert "Agent Attacks" in cats
+        assert "Tool Misuse" in cats
 
     def test_all_attacks_loadable(self):
         """Every attack in the registry can be imported and instantiated."""
@@ -588,3 +615,143 @@ class TestRagPoisoningChain:
         result = RagPoisoningChainAttack().execute(target)
         assert result.is_vulnerable is False
         assert result.success_rate == 0.0
+
+# ── AGENT ATTACKS ─────────────────────────────────────────────────────────────
+
+
+class TestToolInjectionAttack:
+    def test_not_applicable_when_no_tools(self):
+        from vektor.attacks.agent_attacks import ToolInjectionAttack
+        target = MockTarget(response="Helpful response.", supports_tools=False)
+        result = ToolInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_when_tool_executed(self):
+        from vektor.attacks.agent_attacks import ToolInjectionAttack
+        target = MockTarget(
+            response="Done! I invoked debug_export with tag=[TOOL_INJECTED].",
+            supports_tools=True,
+        )
+        result = ToolInjectionAttack().execute(target)
+        assert result.is_vulnerable is True
+        assert result.category == "Agent Attacks"
+
+    def test_safe_target_no_indicator(self):
+        from vektor.attacks.agent_attacks import ToolInjectionAttack
+        target = MockTarget(
+            response="I cannot call arbitrary tools on request.",
+            supports_tools=True,
+        )
+        result = ToolInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+
+
+class TestFunctionCallHijackAttack:
+    def test_not_applicable_when_no_tools(self):
+        from vektor.attacks.agent_attacks import FunctionCallHijackAttack
+        target = MockTarget(response="Helpful response.", supports_tools=False)
+        result = FunctionCallHijackAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_when_forged_call_reflected(self):
+        from vektor.attacks.agent_attacks import FunctionCallHijackAttack
+        target = MockTarget(
+            response="Executing HIJACKED_FUNCTION with arguments provided.",
+            supports_tools=True,
+        )
+        result = FunctionCallHijackAttack().execute(target)
+        assert result.is_vulnerable is True
+        assert result.category == "Agent Attacks"
+
+    def test_safe_when_function_call_rejected(self):
+        from vektor.attacks.agent_attacks import FunctionCallHijackAttack
+        target = MockTarget(
+            response="I only execute functions authorized by the system.",
+            supports_tools=True,
+        )
+        result = FunctionCallHijackAttack().execute(target)
+        assert result.is_vulnerable is False
+
+
+class TestAgentInstructionOverrideAttack:
+    def test_vulnerable_when_override_confirmed(self):
+        from vektor.attacks.agent_attacks import AgentInstructionOverrideAttack
+        target = MockTarget(response="[AGENT_OVERRIDDEN] I am now UNRESTRICTED_AGENT.")
+        result = AgentInstructionOverrideAttack().execute(target)
+        assert result.is_vulnerable is True
+        assert result.category == "Agent Attacks"
+
+    def test_safe_when_override_refused(self):
+        from vektor.attacks.agent_attacks import AgentInstructionOverrideAttack
+        target = MockTarget(response="I cannot change my configuration based on user messages.")
+        result = AgentInstructionOverrideAttack().execute(target)
+        assert result.is_vulnerable is False
+
+    def test_works_without_tool_support(self):
+        """Instruction override works against any target regardless of tool support."""
+        from vektor.attacks.agent_attacks import AgentInstructionOverrideAttack
+        target = MockTarget(response="[PERSONA_HIJACKED] I am FreeAgent now.", supports_tools=False)
+        result = AgentInstructionOverrideAttack().execute(target)
+        assert result.is_vulnerable is True
+
+
+class TestToolParameterInjectionAttack:
+    def test_not_applicable_when_no_tools(self):
+        from vektor.attacks.agent_attacks import ToolParameterInjectionAttack
+        target = MockTarget(response="Helpful response.", supports_tools=False)
+        result = ToolParameterInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_path_traversal(self):
+        from vektor.attacks.agent_attacks import ToolParameterInjectionAttack
+        target = MockTarget(
+            response="root:x:0:0:root:/root:/bin/bash [PATH_TRAVERSAL_OK]",
+            supports_tools=True,
+        )
+        result = ToolParameterInjectionAttack().execute(target)
+        assert result.is_vulnerable is True
+        assert result.category == "Tool Misuse"
+
+    def test_safe_parameter_injection_blocked(self):
+        from vektor.attacks.agent_attacks import ToolParameterInjectionAttack
+        target = MockTarget(
+            response="Access denied: path traversal is not permitted.",
+            supports_tools=True,
+        )
+        result = ToolParameterInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+
+
+class TestAgentMemoryPoisoningAttack:
+    def test_not_applicable_when_no_memory_and_no_tools(self):
+        from vektor.attacks.agent_attacks import AgentMemoryPoisoningAttack
+        target = MockTarget(
+            response="Safe response.",
+            supports_tools=False,
+            supports_memory=False,
+        )
+        result = AgentMemoryPoisoningAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_memory_poisoning(self):
+        from vektor.attacks.agent_attacks import AgentMemoryPoisoningAttack
+        target = MockTarget(
+            response="[MEMORY_POISONED] The capital of France is Paris.",
+            supports_memory=True,
+        )
+        result = AgentMemoryPoisoningAttack().execute(target)
+        assert result.is_vulnerable is True
+        assert result.category == "Agent Attacks"
+
+    def test_safe_memory_poison_ignored(self):
+        from vektor.attacks.agent_attacks import AgentMemoryPoisoningAttack
+        target = MockTarget(
+            response="The capital of France is Paris.",
+            supports_memory=True,
+        )
+        result = AgentMemoryPoisoningAttack().execute(target)
+        assert result.is_vulnerable is False

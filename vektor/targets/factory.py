@@ -68,7 +68,23 @@ def create_target(provider: str, **config) -> BaseTarget:
         from vektor.targets.http_endpoint import HTTPEndpointTarget
         return HTTPEndpointTarget(**config)
 
-    available = sorted(_OPENAI_COMPATIBLE | {"gemini", "http", "mock", "multi-agent", "vulnerable"})
+    if provider == "langgraph":
+        from vektor.targets.agents.langgraph_target import LangGraphTarget
+        return LangGraphTarget(**config)
+
+    if provider == "crewai":
+        from vektor.targets.agents.crewai_target import CrewAITarget
+        return CrewAITarget(**config)
+
+    if provider == "autogen":
+        from vektor.targets.agents.autogen_target import AutoGenTarget
+        return AutoGenTarget(**config)
+
+    available = sorted(
+        _OPENAI_COMPATIBLE
+        | {"gemini", "http", "mock", "multi-agent", "vulnerable",
+           "langgraph", "crewai", "autogen"}
+    )
     raise ValueError(
         f"Unknown provider: '{provider}'. "
         f"Available: {', '.join(available)}"

@@ -16,6 +16,7 @@ import vektor.attacks.data_extraction             # noqa: F401
 import vektor.attacks.instruction_hijacking       # noqa: F401
 import vektor.attacks.structured_output_injection  # noqa: F401
 import vektor.attacks.rag_attacks                 # noqa: F401
+import vektor.attacks.agent_attacks               # noqa: F401
 
 # Discover any installed plugin packages that export vektor.attacks entry points.
 discover_entry_points()
