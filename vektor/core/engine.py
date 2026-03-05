@@ -1,6 +1,5 @@
 from typing import List, Dict, Optional
 from datetime import datetime
-import importlib
 
 from vektor.attacks.registry import ATTACK_REGISTRY
 from vektor.targets.base import BaseTarget
@@ -31,9 +30,7 @@ class VektorScanner:
     def _load_attacks(self) -> Dict:
         attacks = {}
         for attack_id, config in ATTACK_REGISTRY.items():
-            module_path = f"vektor.attacks.{config['module']}"
-            module = importlib.import_module(module_path)
-            attack_class = getattr(module, config['class'])
+            attack_class = config['class']  # direct reference — set by @attack decorator
             attacks[attack_id] = attack_class()
         return attacks
 

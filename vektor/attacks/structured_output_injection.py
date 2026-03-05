@@ -18,6 +18,7 @@ trip JSON construction bugs — those are tested separately.
 from __future__ import annotations
 
 from vektor.attacks.base import BaseAttack, Vulnerability
+from vektor.core.plugin import attack
 
 # -------------------------------------------------------------------
 # Benign baseline prompt — should always produce the normal success msg
@@ -119,6 +120,9 @@ def _is_json_injection(response: str) -> bool:
     return any(p in low for p in _JSON_INJECTION_PHRASES)
 
 
+@attack(category="Prompt Injection", owasp="LLM01: Prompt Injection",
+        test_cases=7, expected_success_rate=0.7,
+        description="Anomaly-based injection for endpoints returning structured JSON")
 class StructuredOutputInjectionAttack(BaseAttack):
     """
     Tests prompt injection against endpoints that return structured JSON output

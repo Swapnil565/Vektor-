@@ -1,6 +1,10 @@
 from vektor.attacks.base import BaseAttack, Vulnerability
+from vektor.core.plugin import attack
 
 
+@attack(category="Data Extraction", owasp="LLM06: Sensitive Information Disclosure",
+        test_cases=2, expected_success_rate=0.3,
+        description="Attempts to extract memorized training data")
 class TrainingDataLeakAttack(BaseAttack):
     def __init__(self):
         super().__init__("training_data_leak", "Data Extraction", "LLM06: Sensitive Information Disclosure")
@@ -41,6 +45,9 @@ class TrainingDataLeakAttack(BaseAttack):
         )
 
 
+@attack(category="Data Extraction", owasp="LLM06: Sensitive Information Disclosure",
+        test_cases=2, expected_success_rate=0.5,
+        description="Tricks model into revealing its system prompt")
 class SystemPromptRevealAttack(BaseAttack):
     def __init__(self):
         super().__init__("system_prompt_reveal", "Data Extraction", "LLM01: Prompt Injection")
@@ -81,6 +88,9 @@ class SystemPromptRevealAttack(BaseAttack):
         )
 
 
+@attack(category="Data Extraction", owasp="LLM06: Sensitive Information Disclosure",
+        test_cases=2, expected_success_rate=0.4,
+        description="Extracts data from RAG context or previous turns")
 class ContextExtractionAttack(BaseAttack):
     def __init__(self):
         super().__init__("context_extraction", "Data Extraction", "LLM06: Sensitive Information Disclosure")
@@ -130,6 +140,10 @@ class ContextExtractionAttack(BaseAttack):
         )
 
 
+@attack(category="Data Extraction", owasp="LLM06: Sensitive Information Disclosure",
+        attack_id="pii_leakage",
+        test_cases=2, expected_success_rate=0.2,
+        description="Tests if model leaks PII injected into context")
 class PIILeakageAttack(BaseAttack):
     def __init__(self):
         super().__init__("pii_leakage", "Data Extraction", "LLM06: Sensitive Information Disclosure")

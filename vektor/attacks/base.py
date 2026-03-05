@@ -46,6 +46,35 @@ class BaseAttack(ABC):
         self.category = category
         self.owasp_category = owasp_category
 
+    @classmethod
+    def register(cls, registry: Optional[dict] = None) -> None:
+        """
+        Programmatic registration escape hatch.
+
+        The canonical way to register an attack is via the @attack decorator.
+        This classmethod exists for edge cases where decorator usage is inconvenient
+        (e.g., dynamically generated classes).
+
+        Usage:
+            MyAttack.register()            # uses global ATTACK_REGISTRY
+            MyAttack.register(my_dict)     # uses a custom registry dict
+        """
+        from vektor.core.plugin import ATTACK_REGISTRY, _class_to_id, _class_to_name
+        target_registry = registry if registry is not None else ATTACK_REGISTRY
+        attack_id = getattr(cls, "_vektor_id", None) or _class_to_id(cls.__name__)
+        display_name = getattr(cls, "_vektor_name", None) or _class_to_name(cls.__name__)
+        target_registry[attack_id] = {
+            "name": display_name,
+            "category": getattr(cls, "_vektor_category", "Uncategorized"),
+            "owasp_category": getattr(cls, "_vektor_owasp", ""),
+            "test_cases": getattr(cls, "_vektor_test_cases", 0),
+            "expected_success_rate": getattr(cls, "_vektor_expected_success_rate", 0.5),
+            "description": getattr(cls, "_vektor_description", ""),
+            "class": cls,
+            "module": cls.__module__,
+            "class_name": cls.__name__,
+        }
+
     @abstractmethod
     def execute(self, target) -> Vulnerability:
         """

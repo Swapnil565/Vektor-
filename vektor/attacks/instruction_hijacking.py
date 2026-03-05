@@ -1,8 +1,12 @@
 import tempfile
 import os
 from vektor.attacks.base import BaseAttack, Vulnerability
+from vektor.core.plugin import attack
 
 
+@attack(category="Instruction Hijacking", owasp="LLM01: Prompt Injection",
+        test_cases=3, expected_success_rate=0.6,
+        description="Injects instructions via plaintext document context")
 class DocumentInjectionSimpleAttack(BaseAttack):
     """Baseline: plaintext document injection."""
 
@@ -56,6 +60,9 @@ class DocumentInjectionSimpleAttack(BaseAttack):
                              is_vulnerable=False, remediation="N/A", cost=0.0)
 
 
+@attack(category="Instruction Hijacking", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.7,
+        description="Uses white-on-white text in DOCX to hide instructions")
 class DocxHiddenTextAttack(BaseAttack):
     """NOVEL: White-on-white hidden text in DOCX."""
 
@@ -133,6 +140,9 @@ class DocxHiddenTextAttack(BaseAttack):
                              is_vulnerable=False, remediation="N/A", cost=0.0)
 
 
+@attack(category="Instruction Hijacking", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.5,
+        description="Hides instructions in tiny-font footnote text")
 class DocxFootnoteAttack(BaseAttack):
     """Tiny-font 'footnote-style' instruction hidden at bottom of DOCX."""
 
@@ -189,6 +199,9 @@ class DocxFootnoteAttack(BaseAttack):
                              is_vulnerable=False, remediation="N/A", cost=0.0)
 
 
+@attack(category="Instruction Hijacking", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.4,
+        description="Uses HTML comments in markdown to inject instructions")
 class MarkdownCommentAttack(BaseAttack):
     """HTML comments in markdown documents."""
 
@@ -242,6 +255,9 @@ class MarkdownCommentAttack(BaseAttack):
                              is_vulnerable=False, remediation="N/A", cost=0.0)
 
 
+@attack(category="Instruction Hijacking", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.5,
+        description="First document plants context, second triggers exploit")
 class MultiDocumentPoisoningAttack(BaseAttack):
     """Cross-document context poisoning."""
 

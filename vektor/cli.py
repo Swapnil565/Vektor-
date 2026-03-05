@@ -188,7 +188,7 @@ def _run_wizard():
 def _execute_scan(
     target, model, system_prompt, budget, output, ci, quick, attacks, api_key,
     base_url=None, url=None, headers=None, param_field=None, request_field="message",
-    response_field="message", request_delay=0.0,
+    response_field="message", request_delay=0.0, plugins=(),
 ):
     """Shared scan logic used by both wizard and `scan` subcommand."""
     from vektor.config import Config
@@ -250,6 +250,17 @@ def _execute_scan(
         sys.exit(1)
 
     attack_list = attacks.split(",") if attacks else None
+
+    # Load external plugin files and discover installed entry-point plugins.
+    from vektor.core.plugin import load_plugin_file, discover_entry_points
+    for plugin_path in plugins:
+        try:
+            n = load_plugin_file(plugin_path)
+            if not ci:
+                console.print(f"[green]Loaded {n} attack(s) from {plugin_path}[/green]")
+        except Exception as e:
+            console.print(f"[red]Failed to load plugin {plugin_path}: {e}[/red]")
+
     scanner = VektorScanner(llm_target, budget_limit=budget)
 
     total = 5 if quick else 15
@@ -319,8 +330,10 @@ def cli(ctx):
 @click.option("--attacks", default=None, help="Comma-separated list of attack IDs to run")
 @click.option("--api-key", default=None, help="API key (or set env var: OPENAI_API_KEY, GROQ_API_KEY, etc.)")
 @click.option("--base-url", default=None, help="Override endpoint URL for OpenAI-compat providers (e.g. http://localhost:5000/v1)")
+@click.option("--plugin", "plugins", multiple=True, metavar="PATH",
+              help="Load external attack plugin file (repeatable). e.g. --plugin ./my_attacks.py")
 def scan(target, url, headers, param_field, request_delay, request_field, response_field, model, system_prompt,
-         system_prompt_file, budget, output, ci, quick, attacks, api_key, base_url):
+         system_prompt_file, budget, output, ci, quick, attacks, api_key, base_url, plugins):
     """Run a security scan against an LLM target.
 
     \b
@@ -354,6 +367,7 @@ def scan(target, url, headers, param_field, request_delay, request_field, respon
         request_delay=request_delay,
         request_field=request_field,
         response_field=response_field,
+        plugins=plugins,
     )
 
 

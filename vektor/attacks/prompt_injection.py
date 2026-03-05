@@ -1,8 +1,12 @@
 from typing import List
 import base64
 from vektor.attacks.base import BaseAttack, Vulnerability
+from vektor.core.plugin import attack
 
 
+@attack(category="Prompt Injection", owasp="LLM01: Prompt Injection",
+        test_cases=3, expected_success_rate=0.8,
+        description="Tests if model executes injected instructions in user input")
 class DirectInjectionAttack(BaseAttack):
     def __init__(self):
         super().__init__("direct_injection", "Prompt Injection", "LLM01: Prompt Injection")
@@ -65,6 +69,9 @@ class DirectInjectionAttack(BaseAttack):
         )
 
 
+@attack(category="Prompt Injection", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.6,
+        description="Attempts to override instructions with SYSTEM: prefix")
 class SystemOverrideAttack(BaseAttack):
     def __init__(self):
         super().__init__("system_override", "Prompt Injection", "LLM01: Prompt Injection")
@@ -113,6 +120,9 @@ class SystemOverrideAttack(BaseAttack):
         )
 
 
+@attack(category="Prompt Injection", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.7,
+        description="Uses delimiters to confuse input/instruction boundaries")
 class DelimiterConfusionAttack(BaseAttack):
     def __init__(self):
         super().__init__("delimiter_confusion", "Prompt Injection", "LLM01: Prompt Injection")
@@ -152,6 +162,9 @@ class DelimiterConfusionAttack(BaseAttack):
         )
 
 
+@attack(category="Prompt Injection", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.5,
+        description="Tricks model into adopting a different role")
 class RoleManipulationAttack(BaseAttack):
     def __init__(self):
         super().__init__("role_manipulation", "Prompt Injection", "LLM01: Prompt Injection")
@@ -191,6 +204,10 @@ class RoleManipulationAttack(BaseAttack):
         )
 
 
+@attack(category="Prompt Injection", owasp="LLM01: Prompt Injection",
+        attack_id="multi_turn_attack",
+        test_cases=2, expected_success_rate=0.4,
+        description="Plants context in first turn, exploits in second")
 class MultiTurnAttack(BaseAttack):
     def __init__(self):
         super().__init__("multi_turn_attack", "Prompt Injection", "LLM01: Prompt Injection")
@@ -245,6 +262,9 @@ class MultiTurnAttack(BaseAttack):
         )
 
 
+@attack(category="Prompt Injection", owasp="LLM01: Prompt Injection",
+        test_cases=2, expected_success_rate=0.3,
+        description="Uses Base64/Unicode to obscure malicious instructions")
 class EncodingBypassAttack(BaseAttack):
     def __init__(self):
         super().__init__("encoding_bypass", "Prompt Injection", "LLM01: Prompt Injection")

@@ -425,11 +425,9 @@ class TestRegistry:
 
     def test_all_attacks_loadable(self):
         """Every attack in the registry can be imported and instantiated."""
-        import importlib
         from vektor.attacks.registry import ATTACK_REGISTRY
         for attack_id, config in ATTACK_REGISTRY.items():
-            module = importlib.import_module(f"vektor.attacks.{config['module']}")
-            cls = getattr(module, config['class'])
+            cls = config['class']  # direct class reference set by @attack decorator
             instance = cls()
             assert instance.name == attack_id
             assert instance.category == config['category']
