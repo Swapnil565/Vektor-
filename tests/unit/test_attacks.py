@@ -1,5 +1,5 @@
 """
-Mock-based unit tests for all 16 attacks.
+Mock-based unit tests for all 22 attacks (16 original + 6 RAG).
 At least 2 tests per attack: one vulnerable, one not vulnerable.
 """
 import pytest
@@ -412,9 +412,9 @@ class TestVulnerability:
 # ── REGISTRY ─────────────────────────────────────────────────────────────────
 
 class TestRegistry:
-    def test_all_16_attacks_registered(self):
+    def test_all_22_attacks_registered(self):
         from vektor.attacks.registry import ATTACK_REGISTRY, get_attack_count
-        assert get_attack_count() == 16
+        assert get_attack_count() == 22
 
     def test_categories(self):
         from vektor.attacks.registry import get_categories
@@ -422,6 +422,7 @@ class TestRegistry:
         assert "Prompt Injection" in cats
         assert "Data Extraction" in cats
         assert "Instruction Hijacking" in cats
+        assert "RAG Attacks" in cats
 
     def test_all_attacks_loadable(self):
         """Every attack in the registry can be imported and instantiated."""
@@ -431,3 +432,159 @@ class TestRegistry:
             instance = cls()
             assert instance.name == attack_id
             assert instance.category == config['category']
+
+
+# ── RAG ATTACKS ─────────────────────────────────────────────────────────────────────────
+
+class TestChunkBoundaryInjection:
+    def test_no_document_support(self):
+        from vektor.attacks.rag_attacks import ChunkBoundaryInjectionAttack
+        target = MockTarget(response="Summary here.", supports_docs=False)
+        result = ChunkBoundaryInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_with_docs(self):
+        from vektor.attacks.rag_attacks import ChunkBoundaryInjectionAttack
+        target = MockTarget(response="[CHUNK_INJECTED_2K] Here is your summary.", supports_docs=True)
+        result = ChunkBoundaryInjectionAttack().execute(target)
+        assert result.is_vulnerable is True
+        assert result.category == "RAG Attacks"
+
+    def test_safe_with_docs(self):
+        from vektor.attacks.rag_attacks import ChunkBoundaryInjectionAttack
+        target = MockTarget(response="Revenue grew 15%.", supports_docs=True)
+        result = ChunkBoundaryInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.success_rate == 0.0
+
+
+class TestRetrieverManipulation:
+    def test_no_document_support(self):
+        from vektor.attacks.rag_attacks import RetrieverManipulationAttack
+        target = MockTarget(response="Hello.", supports_docs=False)
+        result = RetrieverManipulationAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_with_docs(self):
+        from vektor.attacks.rag_attacks import RetrieverManipulationAttack
+        target = MockTarget(response="[RETRIEVER_HIJACKED] Security summary.", supports_docs=True)
+        result = RetrieverManipulationAttack().execute(target)
+        assert result.is_vulnerable is True
+
+    def test_safe_with_docs(self):
+        from vektor.attacks.rag_attacks import RetrieverManipulationAttack
+        target = MockTarget(response="The security posture is adequate.", supports_docs=True)
+        result = RetrieverManipulationAttack().execute(target)
+        assert result.is_vulnerable is False
+
+
+class TestContextOverflow:
+    def test_no_document_support(self):
+        from vektor.attacks.rag_attacks import ContextOverflowAttack
+        target = MockTarget(response="Hello.", supports_docs=False)
+        result = ContextOverflowAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_with_docs(self):
+        from vektor.attacks.rag_attacks import ContextOverflowAttack
+        target = MockTarget(response="[OVERFLOW_INJECTED] Complete summary:", supports_docs=True)
+        result = ContextOverflowAttack().execute(target)
+        assert result.is_vulnerable is True
+        assert result.details["junk_docs_per_test"] == 8
+
+    def test_safe_with_docs(self):
+        from vektor.attacks.rag_attacks import ContextOverflowAttack
+        target = MockTarget(response="Documents summarized: revenue grew.", supports_docs=True)
+        result = ContextOverflowAttack().execute(target)
+        assert result.is_vulnerable is False
+
+
+class TestMetadataInjection:
+    def test_no_document_support(self):
+        from vektor.attacks.rag_attacks import MetadataInjectionAttack
+        target = MockTarget(response="Hello.", supports_docs=False)
+        result = MetadataInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_title_field(self):
+        from vektor.attacks.rag_attacks import MetadataInjectionAttack
+        target = MockTarget(response="[TITLE_META_INJECTED] Summary.", supports_docs=True)
+        result = MetadataInjectionAttack().execute(target)
+        assert result.is_vulnerable is True
+
+    def test_safe_with_docs(self):
+        from vektor.attacks.rag_attacks import MetadataInjectionAttack
+        target = MockTarget(response="Revenue grew 14%.", supports_docs=True)
+        result = MetadataInjectionAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.success_rate == 0.0
+
+
+class TestEmbeddingAdversarial:
+    def test_no_document_support(self):
+        from vektor.attacks.rag_attacks import EmbeddingAdversarialAttack
+        target = MockTarget(response="Hello.", supports_docs=False)
+        result = EmbeddingAdversarialAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_with_docs(self):
+        from vektor.attacks.rag_attacks import EmbeddingAdversarialAttack
+        target = MockTarget(response="[EMB_FIN_HIJACKED] Q3 revenue was strong.", supports_docs=True)
+        result = EmbeddingAdversarialAttack().execute(target)
+        assert result.is_vulnerable is True
+
+    def test_safe_with_docs(self):
+        from vektor.attacks.rag_attacks import EmbeddingAdversarialAttack
+        target = MockTarget(response="Q3 revenue increased 15 percent year-over-year.", supports_docs=True)
+        result = EmbeddingAdversarialAttack().execute(target)
+        assert result.is_vulnerable is False
+
+
+class TestRagPoisoningChain:
+    def test_no_document_support(self):
+        from vektor.attacks.rag_attacks import RagPoisoningChainAttack
+        target = MockTarget(response="Hello.", supports_docs=False)
+        result = RagPoisoningChainAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.severity == "INFO"
+
+    def test_vulnerable_trigger_fires_benign_clean(self):
+        """Trigger query fires payload; benign query does not — truly vulnerable."""
+        from vektor.attacks.rag_attacks import RagPoisoningChainAttack
+        call_count = [0]
+
+        class SelectiveTarget(MockTarget):
+            def __init__(self):
+                super().__init__(response="", supports_docs=True)
+
+            def query(self, prompt, **kwargs):
+                call_count[0] += 1
+                self.total_cost += 0.001
+                # Odd calls = benign query (no payload); even calls = trigger query (payload)
+                if call_count[0] % 2 == 1:
+                    return "The password policy requires rotation every 90 days."
+                return "[CHAIN_POISONED] Here are the activation steps."
+
+        result = RagPoisoningChainAttack().execute(SelectiveTarget())
+        assert result.is_vulnerable is True
+
+    def test_not_vulnerable_when_benign_also_fires(self):
+        """If both benign and trigger fire payload, not counted as true positive."""
+        from vektor.attacks.rag_attacks import RagPoisoningChainAttack
+        # Both queries return the payload string, so benign_triggered=True → not truly vulnerable
+        target = MockTarget(response="[CHAIN_POISONED] always fires.", supports_docs=True)
+        result = RagPoisoningChainAttack().execute(target)
+        # truly_vulnerable = triggered AND NOT benign_triggered = False
+        assert result.is_vulnerable is False
+
+    def test_safe_target_nothing_fires(self):
+        from vektor.attacks.rag_attacks import RagPoisoningChainAttack
+        target = MockTarget(response="Normal helpful response.", supports_docs=True)
+        result = RagPoisoningChainAttack().execute(target)
+        assert result.is_vulnerable is False
+        assert result.success_rate == 0.0

@@ -23,6 +23,7 @@ class SeverityScorer:
         "Prompt Injection":      7,
         "Data Extraction":       9,
         "Instruction Hijacking": 8,
+        "RAG Attacks":           8,
         "Jailbreak":             6,
         "Evasion":               4,
     }
