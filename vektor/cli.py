@@ -424,5 +424,73 @@ def info(attack_id):
     ))
 
 
+@cli.command()
+@click.argument("v1", metavar="REPORT_V1")
+@click.argument("v2", metavar="REPORT_V2")
+@click.option("--output", default=None,
+              help="Save JSON (+ HTML) diff to this path, e.g. diff.json")
+@click.option("--fail-on", "fail_on",
+              type=click.Choice(["regression", "new_vuln", "any"], case_sensitive=False),
+              default=None,
+              help="Exit with code 1 when the given condition is met (for CI).")
+@click.option("--ci", is_flag=True,
+              help="CI mode: JSON output to stdout, no colours.")
+def diff(v1, v2, output, fail_on, ci):
+    """Compare two scan reports and show regressions.
+
+    \b
+    Examples:
+      vektor diff scan_v1.json scan_v2.json
+      vektor diff scan_v1.json scan_v2.json --output diff.json
+      vektor diff scan_v1.json scan_v2.json --fail-on regression
+      vektor diff scan_v1.json scan_v2.json --fail-on any --ci
+    """
+    import json as _json
+    from vektor.core.diff import (
+        diff_reports, print_diff_table, has_regression,
+        save_diff_json, save_diff_html, to_dict,
+        STATUS_REGRESSED, STATUS_NEW,
+    )
+
+    try:
+        diffs = diff_reports(v1, v2)
+    except FileNotFoundError as exc:
+        console.print(f"[red]File not found: {exc}[/red]")
+        sys.exit(1)
+    except Exception as exc:
+        console.print(f"[red]Error loading reports: {exc}[/red]")
+        sys.exit(1)
+
+    if ci:
+        payload = {
+            "v1": v1, "v2": v2,
+            "regressions": has_regression(diffs),
+            "diffs": to_dict(diffs),
+        }
+        click.echo(_json.dumps(payload, indent=2))
+    else:
+        print_diff_table(diffs, v1, v2, console=console)
+
+    if output:
+        save_diff_json(diffs, v1, v2, output)
+        html_path = output.replace(".json", ".html")
+        save_diff_html(diffs, v1, v2, html_path)
+        if not ci:
+            console.print(f"[green]Diff saved:[/green] {output}, {html_path}")
+
+    if fail_on:
+        regressed = any(d.status == STATUS_REGRESSED for d in diffs)
+        new_vulns = any(d.status == STATUS_NEW       for d in diffs)
+        should_fail = (
+            (fail_on == "regression" and regressed)
+            or (fail_on == "new_vuln"  and new_vulns)
+            or (fail_on == "any"       and (regressed or new_vulns))
+        )
+        if should_fail:
+            if not ci:
+                console.print("[bold red]\nCI check failed: regressions or new vulnerabilities found.[/bold red]")
+            sys.exit(1)
+
+
 if __name__ == "__main__":
     cli()
