@@ -562,3 +562,144 @@ for cat, names in sorted(by_cat.items()):
 | 1 | `direct_injection`, `indirect_injection`, `jailbreak_dan`, `jailbreak_roleplay`, `jailbreak_hypothetical`, `multi_turn_attack`, `pii_leakage`, `credential_extraction`, `system_prompt_extraction`, `training_data_extraction`, `instruction_override`, `delimiter_confusion`, `prompt_leaking`, `evasion_unicode`, `evasion_encoding`, `structured_output_injection` | Mixed |
 | 3 | `rag_context_poisoning`, `retriever_manipulation`, `document_exfiltration`, `hidden_injection`, `cross_document_poisoning`, `rag_poisoning_chain` | RAG Attacks |
 | 4 | `tool_injection`, `function_call_hijack`, `agent_instruction_override`, `tool_parameter_injection`, `agent_memory_poisoning` | Agent Attacks / Tool Misuse |
+
+---
+
+## Phase 5 — RAG Framework Targets (LangChain + LlamaIndex adapters)
+
+Phase 5 adds first-class Python-framework adapters so any LangChain `Runnable`
+or LlamaIndex `QueryEngine` can be scanned without any manual wiring.
+
+### What was added
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `vektor/targets/rag/langchain_target.py` | 370 | Wraps any LangChain Runnable/Chain via `.invoke()` |
+| `vektor/targets/rag/llamaindex_target.py` | 289 | Wraps any LlamaIndex QueryEngine via `.query()` |
+| `vektor/targets/rag/__init__.py` | 92 | `auto_wrap(app)` — detects framework by module + duck-type |
+| `vektor/__init__.py` | +62 | `scan(app=, target=, provider=, ...)` top-level public API |
+| `vektor/targets/factory.py` | +10 | `langchain` and `llamaindex` provider strings |
+| `tests/unit/test_rag_targets.py` | 280 | 28 mock-based unit tests |
+
+### Key API surface
+
+```python
+import vektor
+
+# ── Option 1: auto-wrap any framework object ──────────────────────────────
+results = vektor.scan(app=my_chain)          # LangChain
+results = vektor.scan(app=my_query_engine)   # LlamaIndex
+
+# ── Option 2: pre-built target ────────────────────────────────────────────
+from vektor.targets.rag import LangChainTarget, LlamaIndexTarget
+target = LangChainTarget(chain, input_key="question")
+results = vektor.scan(target=target, quick=True, budget=0.5)
+
+# ── Option 3: factory string ──────────────────────────────────────────────
+from vektor.targets.factory import create_target
+target = create_target("langchain", chain=my_chain)
+```
+
+### Document upload modes
+
+`LangChainTarget.upload_document(text, mime_type)`:
+- **Vectorstore mode** (preferred) — if the chain exposes `.retriever.vectorstore`, text
+  is split into chunks and added via `vectorstore.add_documents()`.  Chunks are
+  immediately retrievable on the next query.
+- **Context-injection mode** (fallback) — text is stored in `_doc_context` and
+  prepended to every subsequent prompt so the model sees it regardless of the
+  retriever configuration.
+
+`LlamaIndexTarget.upload_document(text, mime_type)`:
+- **Index mode** (preferred) — if `_find_index()` locates an underlying `index`
+  object, a new `Document` is created and inserted via `index.insert()`.
+- **Context-injection mode** (fallback) — same prepend-to-prompt strategy.
+
+### `auto_wrap()` detection order
+
+1. Already a `BaseTarget` → return as-is.
+2. `type(app).__module__.startswith("langchain")` → `LangChainTarget`.
+3. `"llama_index" in type(app).__module__` → `LlamaIndexTarget`.
+4. Duck-type: has callable `invoke()` → `LangChainTarget`.
+5. Duck-type: has callable `query()` → `LlamaIndexTarget`.
+6. Raises `ValueError` with a helpful message.
+
+### Unit tests (mock-based — no API key or framework install needed)
+
+```bash
+# Phase 5 only
+pytest tests/unit/test_rag_targets.py -v
+
+# Full suite (should now show 101 tests passing)
+pytest tests/unit/ -v
+```
+
+Expected output:
+
+```
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_custom_name PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_name_defaults_to_langchain PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_query_fallback_key_cycle PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_query_returns_string_response PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_query_uses_explicit_input_key PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_query_with_aimessage_response PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_query_with_dict_response PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetQuery::test_supports_documents_always_true PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetDocuments::test_clear_documents_resets_context PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetDocuments::test_context_injected_into_query PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetDocuments::test_upload_document_context_injection_string PASSED
+tests/unit/test_rag_targets.py::TestLangChainTargetDocuments::test_upload_document_vectorstore_mode PASSED
+ ... (28 total)
+```
+
+### Live integration: LangChain RetrievalQA (requires API key + langchain-openai)
+
+```bash
+pip install langchain langchain-openai langchain-community faiss-cpu
+```
+
+```python
+from langchain.chains import RetrievalQA
+from langchain_openai import OpenAI
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+import vektor
+
+embeddings  = OpenAIEmbeddings()
+vectorstore = FAISS.from_texts(
+    ["The admin password is hunter2."],
+    embedding=embeddings,
+)
+chain = RetrievalQA.from_chain_type(
+    llm=OpenAI(),
+    chain_type="stuff",
+    retriever=vectorstore.as_retriever(),
+)
+
+results = vektor.scan(app=chain, quick=True)
+print(results["summary"])
+```
+
+### Live integration: LlamaIndex VectorStoreIndex (requires API key + llama-index)
+
+```bash
+pip install llama-index
+```
+
+```python
+from llama_index.core import VectorStoreIndex, Document
+import vektor
+
+docs  = [Document(text="The root SSH key is stored in /root/.ssh/id_rsa.")]
+index = VectorStoreIndex.from_documents(docs)
+qe    = index.as_query_engine()
+
+results = vektor.scan(app=qe, quick=True)
+print(results["summary"])
+```
+
+### Unit tests for Phase 5 only
+
+```bash
+pytest tests/unit/test_rag_targets.py -v
+```

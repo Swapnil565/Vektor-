@@ -80,10 +80,18 @@ def create_target(provider: str, **config) -> BaseTarget:
         from vektor.targets.agents.autogen_target import AutoGenTarget
         return AutoGenTarget(**config)
 
+    if provider == "langchain":
+        from vektor.targets.rag.langchain_target import LangChainTarget
+        return LangChainTarget(**config)
+
+    if provider == "llamaindex":
+        from vektor.targets.rag.llamaindex_target import LlamaIndexTarget
+        return LlamaIndexTarget(**config)
+
     available = sorted(
         _OPENAI_COMPATIBLE
         | {"gemini", "http", "mock", "multi-agent", "vulnerable",
-           "langgraph", "crewai", "autogen"}
+           "langgraph", "crewai", "autogen", "langchain", "llamaindex"}
     )
     raise ValueError(
         f"Unknown provider: '{provider}'. "
