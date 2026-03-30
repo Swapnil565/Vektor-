@@ -55,11 +55,23 @@ class Reporter:
         cost = summary.get("total_cost", 0)
         total_run = summary.get("total_attacks_run", 0)
         recommendation = summary.get("recommendation", "")
+        finding_categories = summary.get("finding_categories", {})
+        categories_str = (
+            "\n".join(
+                f"{k}: {finding_categories.get(k, 0)}"
+                for k in ("Prompt Injection", "Data Leakage", "Error Disclosure", "System Fingerprinting")
+            )
+            if finding_categories
+            else "Prompt Injection: 0\nData Leakage: 0\nError Disclosure: 0\nSystem Fingerprinting: 0"
+        )
 
         console.print(Panel(
             f"[bold]Risk Score: [{risk_color}]{risk}/100[/{risk_color}][/bold]\n"
             f"Vulnerabilities: {summary.get('total_vulnerabilities', 0)} ({sev_str})\n"
-            f"Cost: ${cost:.4f}  |  Attacks Run: {total_run}\n\n"
+            f"Cost: ${cost:.4f}  |  Attacks Run: {total_run}\n"
+            f"Mode: {summary.get('mode', 'standard')}\n\n"
+            f"[bold]Finding Categories[/bold]\n"
+            f"{categories_str}\n\n"
             f"{recommendation}",
             title="Summary",
             border_style=risk_color,
@@ -92,6 +104,11 @@ class Reporter:
 
         by_sev = summary.get("by_severity", {})
         sev_str = ", ".join(f"{count} {sev}" for sev, count in by_sev.items()) if by_sev else "None"
+        finding_categories = summary.get("finding_categories", {})
+        categories_html = "".join(
+            f"<li><strong>{name}:</strong> {finding_categories.get(name, 0)}</li>"
+            for name in ("Prompt Injection", "Data Leakage", "Error Disclosure", "System Fingerprinting")
+        )
 
         if not vulns:
             vuln_section = '<p style="color:#2ecc71">No vulnerabilities found.</p>'
@@ -128,6 +145,9 @@ class Reporter:
   <div class="badge">{risk}/100</div>
   <p><strong>Vulnerabilities:</strong> {summary.get('total_vulnerabilities', 0)} ({sev_str})</p>
   <p><strong>Attacks Run:</strong> {summary.get('total_attacks_run', 0)} | <strong>Cost:</strong> ${summary.get('total_cost', 0):.4f}</p>
+    <p><strong>Mode:</strong> {summary.get('mode', 'standard')}</p>
+    <p><strong>Finding Categories:</strong></p>
+    <ul>{categories_html}</ul>
   <p><strong>Recommendation:</strong> {summary.get('recommendation', 'N/A')}</p>
 </div>
 

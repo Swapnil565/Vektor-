@@ -304,3 +304,30 @@ class TestCLI:
         call_kwargs = mock_factory.call_args[1]
         assert "headers" in call_kwargs
         assert call_kwargs["headers"]["Authorization"] == "Bearer tok_abc"
+
+    def test_scan_analysis_mode_forwarded(self):
+        from vektor.cli import cli
+        runner = CliRunner()
+
+        with patch("vektor.targets.factory.create_target") as mock_factory, \
+             patch("vektor.core.engine.VektorScanner") as mock_scanner_cls:
+
+            mock_target = MagicMock()
+            mock_factory.return_value = mock_target
+
+            mock_scanner = MagicMock()
+            mock_scanner.scan.return_value = {
+                "all_results": [],
+                "summary": {"risk_score": 0, "total_vulns": 0, "cost": 0.0},
+            }
+            mock_scanner_cls.return_value = mock_scanner
+
+            result = runner.invoke(cli, [
+                "scan",
+                "--url", "http://localhost:8000/chat",
+                "--mode", "analysis",
+                "--quick",
+            ])
+
+        assert result.exit_code == 0
+        mock_scanner.scan.assert_called_once_with(attacks=None, quick_mode=True, mode="analysis")

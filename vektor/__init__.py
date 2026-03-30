@@ -33,6 +33,7 @@ def scan(
     model: Optional[str] = None,
     attacks: Optional[List[str]] = None,
     quick: bool = False,
+    mode: str = "standard",
     budget: float = 1.0,
     fail_on: Optional[str] = None,
     **kwargs,
@@ -72,6 +73,7 @@ def scan(
         model:    Model name forwarded to :func:`create_target` (keyword-only).
         attacks:  Attack names to run (all registered attacks if omitted).
         quick:    Run only high-success-rate attacks (same as CLI ``--quick``).
+        mode:     Scan mode: ``"standard"`` or ``"analysis"``.
         budget:   Maximum USD to spend across the scan (default 1.0).
         fail_on:  Severity threshold — raise :exc:`ScanFailed` if any vulnerability
                   meets or exceeds this level.  Accepted values: ``"CRITICAL"``,
@@ -108,7 +110,7 @@ def scan(
 
     # ── Run scan ──────────────────────────────────────────────────────────────
     scanner = VektorScanner(resolved, budget_limit=budget)
-    results = scanner.scan(attacks=attacks, quick_mode=quick)
+    results = scanner.scan(attacks=attacks, quick_mode=quick, mode=mode)
 
     # ── fail_on check ─────────────────────────────────────────────────────────
     if fail_on is not None:
@@ -135,6 +137,7 @@ def quick_scan(
     provider: Optional[str] = None,
     url: Optional[str] = None,
     model: Optional[str] = None,
+    mode: str = "standard",
     budget: float = 0.25,
     fail_on: Optional[str] = None,
     **kwargs,
@@ -159,6 +162,7 @@ def quick_scan(
         provider=provider,
         url=url,
         model=model,
+        mode=mode,
         quick=True,
         budget=budget,
         fail_on=fail_on,

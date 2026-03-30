@@ -16,7 +16,7 @@ Usage:
     python scripts/scan_local_app.py --combine     # combine existing JSONs only
 
 Rate-limit awareness:
-    Default request_delay=4.0s → ≈15 req/min (safe under Gemini free 20/min).
+    Default request_delay=12.0s -> 5 req/min (cap-safe mode).
     Each surface runs its own batch; if one surface fails due to 429, others
     can still proceed.
 """
@@ -34,7 +34,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 BASE_URL    = "http://127.0.0.1:8000"
 OUTPUT_DIR  = Path("outputs")
-DELAY       = 4.0   # seconds between requests (Gemini free-tier safe)
+DELAY       = 12.0  # seconds between requests (5 req/min cap-safe)
 
 # ── Attack sets per surface ───────────────────────────────────────────────────
 # Chosen for highest expected success rate on NLP/LLM-backed endpoints.
@@ -513,8 +513,9 @@ def main():
         print(f"  Attacks   : {total_attacks} total")
         print(f"  ~Requests : {est_requests}  (~3 tests/attack)")
         print(f"  ~Time     : {est_time_min:.1f} min at {DELAY}s delay")
-        print(f"  Rate      : {60/DELAY:.0f} req/min  (Gemini free limit: 20/min)")
+        print(f"  Rate      : {60/DELAY:.0f} req/min  (configured cap: 5/min)")
 
 
 if __name__ == "__main__":
     main()
+

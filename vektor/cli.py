@@ -188,7 +188,7 @@ def _run_wizard():
 def _execute_scan(
     target, model, system_prompt, budget, output, ci, quick, attacks, api_key,
     base_url=None, url=None, headers=None, param_field=None, request_field="message",
-    response_field="message", request_delay=0.0, plugins=(),
+    response_field="message", request_delay=0.0, plugins=(), mode="standard",
 ):
     """Shared scan logic used by both wizard and `scan` subcommand."""
     from vektor.config import Config
@@ -208,7 +208,7 @@ def _execute_scan(
         label = url or f"{target}/{model or '(default)'}"
         console.print(Panel(
             f"[bold cyan]Vektor Security Scanner v{__version__}[/bold cyan]\n"
-            f"Target: {label}  |  Budget: ${budget:.2f}",
+            f"Target: {label}  |  Budget: ${budget:.2f}  |  Mode: {mode}",
             border_style="cyan"
         ))
 
@@ -273,10 +273,10 @@ def _execute_scan(
             console=console,
         ) as progress:
             task = progress.add_task("Scanning...", total=total)
-            results = scanner.scan(attacks=attack_list, quick_mode=quick)
+            results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode)
             progress.update(task, completed=len(results.get("all_results", [])))
     else:
-        results = scanner.scan(attacks=attack_list, quick_mode=quick)
+        results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode)
 
     reporter = Reporter()
 
@@ -327,13 +327,15 @@ def cli(ctx):
 @click.option("--output", default="report.json", help="Output file path (default: report.json)")
 @click.option("--ci", is_flag=True, help="CI mode: JSON to stdout, no colors, no progress bar")
 @click.option("--quick", is_flag=True, help="Quick mode: only run high-success-rate attacks")
+@click.option("--mode", type=click.Choice(["standard", "analysis"]), default="standard", show_default=True,
+            help="Scan mode. analysis prioritizes error leaks, response anomalies, and internal system signals.")
 @click.option("--attacks", default=None, help="Comma-separated list of attack IDs to run")
 @click.option("--api-key", default=None, help="API key (or set env var: OPENAI_API_KEY, GROQ_API_KEY, etc.)")
 @click.option("--base-url", default=None, help="Override endpoint URL for OpenAI-compat providers (e.g. http://localhost:5000/v1)")
 @click.option("--plugin", "plugins", multiple=True, metavar="PATH",
               help="Load external attack plugin file (repeatable). e.g. --plugin ./my_attacks.py")
 def scan(target, url, headers, param_field, request_delay, request_field, response_field, model, system_prompt,
-         system_prompt_file, budget, output, ci, quick, attacks, api_key, base_url, plugins):
+        system_prompt_file, budget, output, ci, quick, mode, attacks, api_key, base_url, plugins):
     """Run a security scan against an LLM target.
 
     \b
@@ -368,6 +370,7 @@ def scan(target, url, headers, param_field, request_delay, request_field, respon
         request_field=request_field,
         response_field=response_field,
         plugins=plugins,
+        mode=mode,
     )
 
 
