@@ -58,3 +58,13 @@ tmpclaude-*
 # Internal docs & scripts (not for public repo)
 docs/internal/
 backfill_commits.sh
+
+# Scan outputs / artifacts (internal only)
+outputs/
+_write_rag_targets.py
+
+# Demo server (recording tool, not for public repo)
+demo_server.py
+
+# Personal Claude Code config
+CLAUDE.md

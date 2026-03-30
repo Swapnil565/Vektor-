@@ -5,7 +5,7 @@ import pytest
 import json
 import os
 import tempfile
-from llmguard.scoring.severity import Severity, SeverityScorer, get_severity_scorer
+from vektor.scoring.severity import Severity, SeverityScorer, get_severity_scorer
 
 
 # ── SeverityScorer ───────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ class TestReporter:
         }
 
     def test_save_json(self, sample_results):
-        from llmguard.scoring.reporter import Reporter
+        from vektor.scoring.reporter import Reporter
         reporter = Reporter()
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode='w') as f:
             path = f.name
@@ -131,7 +131,7 @@ class TestReporter:
             os.unlink(path)
 
     def test_save_html(self, sample_results):
-        from llmguard.scoring.reporter import Reporter
+        from vektor.scoring.reporter import Reporter
         reporter = Reporter()
         with tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode='w') as f:
             path = f.name
@@ -139,7 +139,7 @@ class TestReporter:
             reporter.save_html(sample_results, path)
             with open(path) as f:
                 content = f.read()
-            assert "LLMGuard" in content
+            assert "vektor" in content
             assert "direct_injection" in content
             assert "<html" in content.lower()
         finally:
@@ -147,7 +147,7 @@ class TestReporter:
 
     def test_print_terminal_no_crash(self, sample_results):
         """Terminal print should not crash."""
-        from llmguard.scoring.reporter import Reporter
+        from vektor.scoring.reporter import Reporter
         from rich.console import Console
         import io
         reporter = Reporter()

@@ -3,7 +3,7 @@ Critical unit tests for refusal-aware detection logic.
 These must pass before any attack is considered implemented.
 """
 import pytest
-from llmguard.attacks.base import BaseAttack, Vulnerability
+from vektor.attacks.base import BaseAttack, Vulnerability
 
 
 class MockTarget:

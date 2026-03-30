@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "llmguard-lite"
-version = "0.1.0"
-description = "Security testing framework for LLM applications"
+name = "vektor"
+version = "0.2.0"
+description = "AI security testing framework — pytest for LLM applications"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"
@@ -33,11 +33,11 @@ dependencies = [
 dev = ["pytest>=7.4.3", "pytest-cov>=4.1.0", "pytest-mock>=3.12.0", "black>=23.12.0", "ruff>=0.1.9"]
 
 [project.scripts]
-llmguard = "llmguard.cli:cli"
+vektor = "vektor.cli:cli"
 
 [project.urls]
-Homepage = "https://github.com/swapnilwankhede23/llmguard-lite"
-Issues = "https://github.com/swapnilwankhede23/llmguard-lite/issues"
+Homepage = "https://github.com/swapnilwankhede23/vektor"
+Issues = "https://github.com/swapnilwankhede23/vektor/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -45,7 +45,7 @@ addopts = "-v --tb=short"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["llmguard*"]
+include = ["vektor*"]
 
 [tool.black]
 line-length = 100
