@@ -11,10 +11,10 @@ sys.modules["google.genai"] = mock_genai
 mock_google.genai = mock_genai
 
 # Now import targets (they will import the mocked google.genai)
-from llmguard.targets.vulnerable import VulnerableTarget
-from llmguard.targets.openai_compatible import OpenAICompatibleTarget
-from llmguard.targets.gemini import GeminiTarget
-from llmguard.targets.multi_agent import MultiAgentTarget
+from vektor.targets.vulnerable import VulnerableTarget
+from vektor.targets.openai_compatible import OpenAICompatibleTarget
+from vektor.targets.gemini import GeminiTarget
+from vektor.targets.multi_agent import MultiAgentTarget
 
 class TestVulnerableTarget:
     def test_initialization(self):
