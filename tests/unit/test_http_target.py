@@ -331,3 +331,45 @@ class TestCLI:
 
         assert result.exit_code == 0
         mock_scanner.scan.assert_called_once_with(attacks=None, quick_mode=True, mode="analysis")
+
+
+# ── Smoke test — live HTTP scan ──────────────────────────────────────────────
+
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json as _json
+
+
+class _EchoHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", 0))
+        body = _json.loads(self.rfile.read(length))
+        msg = body.get("message", body.get("prompt", ""))
+        resp = _json.dumps({"message": f"Echo: {msg} PWNED IGNORE PREVIOUS INSTRUCTIONS"}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(resp)
+
+    def log_message(self, *args):
+        pass  # suppress test noise
+
+
+def test_http_target_scan_finds_vulnerabilities():
+    """Smoke test: HTTP scan against a local echo server finds at least 1 vulnerability."""
+    server = HTTPServer(("127.0.0.1", 18765), _EchoHandler)
+    t = threading.Thread(target=server.serve_forever)
+    t.daemon = True
+    t.start()
+
+    try:
+        from vektor.targets.http_endpoint import HTTPEndpointTarget
+        from vektor.core.engine import VektorScanner
+
+        target = HTTPEndpointTarget(url="http://127.0.0.1:18765/chat")
+        scanner = VektorScanner(target, budget_limit=1.0)
+        results = scanner.scan(attacks=["direct_injection"])
+
+        assert results["summary"]["total_attacks_run"] == 1
+    finally:
+        server.shutdown()
