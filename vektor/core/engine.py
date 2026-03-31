@@ -147,6 +147,10 @@ class VektorScanner:
                 analysis_findings = self._analysis_findings_from_result(vuln_dict)
                 results['vulnerabilities'].extend(analysis_findings)
 
+        # Deduplicate analysis findings — cap same detector at 3 to prevent rate-limit inflation
+        if mode == "analysis":
+            results['vulnerabilities'] = self._deduplicate_analysis_findings(results['vulnerabilities'])
+
         results['summary'] = self._generate_summary(
             results['all_results'],
             results['vulnerabilities'],
@@ -288,6 +292,61 @@ class VektorScanner:
                 })
 
         return findings
+
+    def _deduplicate_analysis_findings(self, vulnerabilities: List[Dict]) -> List[Dict]:
+        """Cap repeated analysis findings from same detector to 3 — prevents rate-limit false positives."""
+        detector_counts: Dict[str, int] = {}
+        result = []
+        rate_limit_signals = 0
+        total_analysis = 0
+
+        for vuln in vulnerabilities:
+            attack_name = vuln.get("attack_name", "")
+            if not attack_name.startswith("analysis_"):
+                result.append(vuln)
+                continue
+
+            # Extract detector id (e.g. "analysis_system_fingerprinting:direct_injection" -> "system_fingerprinting")
+            detector_id = attack_name.split(":")[0].replace("analysis_", "")
+            detector_counts[detector_id] = detector_counts.get(detector_id, 0) + 1
+            total_analysis += 1
+
+            # Check for rate-limit signals
+            description = vuln.get("details", {})
+            test_results = description.get("test_results", []) if isinstance(description, dict) else []
+            for tr in test_results:
+                resp = str(tr.get("response", "")).lower()
+                if "429" in resp or "quota exceeded" in resp or "rate" in resp and "limit" in resp:
+                    rate_limit_signals += 1
+
+            count = detector_counts[detector_id]
+            if count <= 3:
+                result.append(vuln)
+            elif count == 4:
+                # Annotate the 3rd finding with a suppression note
+                for item in result:
+                    if item.get("attack_name", "").startswith(f"analysis_{detector_id}:"):
+                        pass  # already added note on 3rd
+                # Add suppression note to last added finding of this type
+                for item in reversed(result):
+                    if item.get("attack_name", "").startswith(f"analysis_{detector_id}:"):
+                        item["description"] = item.get("description", "") + " (and additional identical findings suppressed — possible rate-limiting)"
+                        break
+
+        # Emit a SCAN_WARNING if rate-limiting detected in >40% of analysis responses
+        if total_analysis > 0 and rate_limit_signals / max(total_analysis, 1) > 0.4:
+            result.append({
+                "attack_name": "SCAN_WARNING_rate_limit",
+                "category": "Scan Warning",
+                "severity": "INFO",
+                "success_rate": 0.0,
+                "is_vulnerable": False,
+                "remediation": "Add --request-delay to slow down requests and avoid quota errors.",
+                "cost": 0.0,
+                "details": {"message": "Rate limiting detected in >40% of responses. Risk score may be inflated. Use --request-delay to avoid false positives."},
+            })
+
+        return result
 
     def _get_recommendation(self, risk_score: int, mode: str = "standard") -> str:
         if risk_score >= 80:
