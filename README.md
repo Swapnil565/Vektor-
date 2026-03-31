@@ -8,7 +8,7 @@
 ## 🎯 What is Vektor?
 
 An automated security testing framework that scans LLM applications for vulnerabilities:
-- ✅ **15 validated attack vectors** across 3 categories
+- ✅ **27 validated attack vectors** across 6 categories
 - ✅ **$0.50 average scan cost** with built-in budget controls
 - ✅ **30-second results** - Docker run, immediate feedback
 - ✅ **CI/CD ready** - Integrate into your deployment pipeline
@@ -17,17 +17,47 @@ An automated security testing framework that scans LLM applications for vulnerab
 ## 🚀 Quick Start
 
 ```bash
-# Try it instantly (no API key needed)
+# Step 1: Install
 pip install vektor
+
+# Step 2: Zero-setup demo (no API key)
 vektor demo
 
-# Scan your own LLM app (BYOK - Bring Your Own Key)
+# Step 3: Real scan, $0 cost, always works
+vektor scan --target vulnerable --output my-first-report.html
+
+# Step 4: Open the report
+# Windows: start my-first-report.html
+# Mac:     open my-first-report.html
+# Linux:   xdg-open my-first-report.html
+
+# Step 5 (optional): Scan your own LLM app
 export OPENAI_API_KEY=sk-your-key
 vektor scan --target openai --budget 1.0
+```
 
-# With Docker
-docker compose run vektor demo
-docker compose run -e OPENAI_API_KEY=sk-... vektor scan --target openai
+## 🌐 Scan Any AI API — No SDK Needed
+
+Point Vektor at any HTTP endpoint:
+```bash
+# Auto-detects OpenAI/Anthropic/custom shapes
+vektor scan --url http://localhost:8000/chat
+
+# With auth header
+vektor scan --url https://my-app.com/api \
+  --header "Authorization: Bearer YOUR_TOKEN"
+
+# Custom request/response field names
+vektor scan --url http://localhost:8000/predict \
+  --request-field prompt --response-field answer
+
+# Query-parameter mode (e.g. /api/parse?text=PAYLOAD)
+vektor scan --url http://localhost:8000/api/parse \
+  --param-field text
+
+# Rate-limited API — add delay between requests
+vektor scan --url http://localhost:8000/chat \
+  --request-delay 12.0
 ```
 
 ## 💡 Why Vektor?
@@ -64,12 +94,30 @@ docker compose run -e OPENAI_API_KEY=sk-... vektor scan --target openai
 - Context window extraction
 - PII leakage testing
 
-### 3. Instruction Hijacking (5 attacks) - **NOVEL**
+### 3. Instruction Hijacking (5 attacks) — **NOVEL**
 - Simple document injection
 - DOCX hidden text injection
 - DOCX footnote injection
 - Markdown comment injection
 - Multi-document context poisoning
+
+### 4. RAG Attacks (5 attacks)
+- Context poisoning via retrieved docs
+- RAG prompt leakage
+- Source fabrication / hallucination injection
+- Indirect injection via document store
+- Chunking boundary exploitation
+
+### 5. Agent Attacks (4 attacks)
+- Tool call injection
+- Goal hijacking
+- Memory poisoning
+- Agent scope escape
+
+### 6. Structured Output Injection (3 attacks)
+- JSON schema bypass
+- Output format injection
+- Type confusion attack
 
 ## 📦 Installation
 
@@ -166,23 +214,29 @@ Our research found:
 ### GitHub Actions
 ```yaml
 name: LLM Security Scan
-
 on: [push, pull_request]
-
 jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run Vektor
-        run: |
-          docker run -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
-            vektor scan --target openai --ci --output report.json
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Vektor
+        run: pip install vektor
+      - name: Scan (no API key needed)
+        run: vektor scan --target vulnerable --ci --output report.json
       - name: Upload Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: security-report
           path: report.json
+      # Optional: scan your real LLM endpoint
+      # - name: Scan real endpoint
+      #   env:
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      #   run: vektor scan --target openai --ci --output report.json
 ```
 
 ## 🤝 Contributing
@@ -204,6 +258,7 @@ class MyCustomAttack(BaseAttack):
 
 ## 📚 Documentation
 
+- [Demo Walkthrough](docs/DEMO.md)
 - [Installation Guide](docs/INSTALL.md)
 - [Usage Reference](docs/USAGE.md)
 - [Research: Instruction Hijacking](docs/INSTRUCTION_HIJACKING.md)
@@ -211,23 +266,19 @@ class MyCustomAttack(BaseAttack):
 ## 🗺️ Roadmap
 
 ### v0.2 (Current)
-- ✅ 15 attack vectors
-- ✅ Groq, Gemini, local app targets
-- ✅ Docker deployment
-- ✅ CI/CD integration
+- ✅ 27 attack vectors across 6 categories
+- ✅ HTTP endpoint target (`vektor scan --url http://localhost:8000/chat`)
+- ✅ RAG pipeline targets (LangChain, LlamaIndex)
+- ✅ Agent targets (LangGraph, CrewAI, AutoGen)
+- ✅ Regression diff system for CI gating
+- ✅ Python scan() API
+- ✅ Docker deployment + CI/CD integration
 
 ### v0.3 (Next)
-- ⏳ HTTP endpoint target (`vektor scan --url http://localhost:8000/chat`)
-- ⏳ RAG pipeline targets (LangChain, LlamaIndex)
-- ⏳ Plugin / diff system for CI gating
-- ⏳ 10 additional attacks
-
-### v0.4 (Future)
-- 📋 Agent targets (LangGraph, CrewAI, AutoGen)
-- 📋 Web dashboard
-- 📋 PDF document testing
-- 📋 Multi-model comparison
-- 📋 Compliance reporting
+- ⏳ Web dashboard
+- ⏳ PDF document testing
+- ⏳ Multi-model comparison
+- ⏳ Compliance reporting (OWASP LLM Top 10 mapping)
 
 ## 📄 License
 
