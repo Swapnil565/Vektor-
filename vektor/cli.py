@@ -159,7 +159,7 @@ def _run_wizard():
         f"[cyan]Provider:[/cyan]      {provider}\n"
         f"[cyan]API key:[/cyan]       {'(set)' if api_key else '(none)'}\n"
         f"[cyan]System prompt:[/cyan] {'(set)' if system_prompt else '(none)'}\n"
-        f"[cyan]Mode:[/cyan]          {'Quick (5 attacks)' if quick else 'Full (15 attacks)'}",
+        f"[cyan]Mode:[/cyan]          {'Quick' if quick else 'Full (27 attacks)'}",
         title="[bold]Ready to scan[/bold]",
         border_style="cyan",
     ))
@@ -263,7 +263,13 @@ def _execute_scan(
 
     scanner = VektorScanner(llm_target, budget_limit=budget)
 
-    total = 5 if quick else 15
+    from vektor.attacks.registry import ATTACK_REGISTRY
+    if attack_list:
+        total = len(attack_list)
+    elif quick:
+        total = sum(1 for a in ATTACK_REGISTRY.values() if a['expected_success_rate'] > 0.5)
+    else:
+        total = len(ATTACK_REGISTRY)
     if not ci:
         with Progress(
             SpinnerColumn(),
@@ -286,12 +292,19 @@ def _execute_scan(
     else:
         reporter.print_terminal(results, console)
 
-    reporter.save_json(results, output)
-    html_path = output.replace(".json", ".html")
+    # Derive json/html paths regardless of what extension --output has
+    if output.endswith(".html"):
+        html_path = output
+        json_path = output[:-5] + ".json"
+    else:
+        json_path = output
+        html_path = output.replace(".json", ".html") if output.endswith(".json") else output + ".html"
+
+    reporter.save_json(results, json_path)
     reporter.save_html(results, html_path)
 
     if not ci:
-        console.print(f"\n[green]Reports saved:[/green] {output}, {html_path}")
+        console.print(f"\n[green]Reports saved:[/green] {json_path}, {html_path}")
 
     risk = results.get("summary", {}).get("risk_score", 0)
     if risk >= 80:
