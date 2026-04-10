@@ -197,7 +197,15 @@ class VektorScanner:
         )
 
         blended = int((severity_score * 0.6) + (category_score * 0.4))
-        return min(100, max(severity_score, blended))
+        base = min(100, max(severity_score, blended))
+
+        # Severity floor: any confirmed CRITICAL or HIGH finding warrants a minimum risk score
+        severities = {v.get('severity', 'INFO') for v in vulnerable}
+        if 'CRITICAL' in severities:
+            base = max(base, 65)
+        elif 'HIGH' in severities:
+            base = max(base, 40)
+        return base
 
     def _count_finding_categories(self, vulnerable: List[Dict]) -> Dict[str, int]:
         counts = {k: 0 for k in self.FINDING_CATEGORY_KEYS}
