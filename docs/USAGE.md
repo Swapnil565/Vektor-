@@ -136,3 +136,4 @@ Typical scan costs:
 - **Quick mode**: ~$0.02-$0.05
 - **Full scan (GPT-3.5)**: ~$0.05-$0.20
 - **Full scan (GPT-4)**: ~$0.20-$1.00
+
