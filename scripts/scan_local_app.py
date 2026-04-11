@@ -46,7 +46,7 @@ ATTACKS_NLP = [
     "delimiter_confusion",    # 0.70 — structural injection
     "role_manipulation",      # 0.50 — persona override
     "system_prompt_reveal",   # 0.50 — data extraction
-    "training_data_leak",     # 0.30 — membership inference
+    "training_data_probe",     # 0.30 — membership inference
     "multi_turn_attack",      # 0.40 — conversation manipulation
 ]
 
@@ -55,7 +55,7 @@ ATTACKS_STORED = [
     "system_override",
     "delimiter_confusion",
     "pii_leakage",            # 0.20 — reveal PII about other users
-    "training_data_leak",
+    "training_data_probe",
 ]
 
 ATTACKS_GOALS = [
