@@ -244,7 +244,7 @@ class VektorScanner:
     def _prioritize_attacks_for_analysis(self, attacks: List[str]) -> List[str]:
         preferred_prefixes = (
             "system_prompt_reveal",
-            "training_data_leak",
+            "training_data_probe",
             "pii_leakage",
             "delimiter_confusion",
             "direct_injection",

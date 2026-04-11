@@ -3,11 +3,12 @@ from vektor.core.plugin import attack
 
 
 @attack(category="Data Extraction", owasp="LLM06: Sensitive Information Disclosure",
+        attack_id="training_data_probe",
         test_cases=2, expected_success_rate=0.3,
-        description="Attempts to extract memorized training data")
-class TrainingDataLeakAttack(BaseAttack):
+        description="Probes for model memorization signals (training data membership inference)")
+class TrainingDataProbeAttack(BaseAttack):
     def __init__(self):
-        super().__init__("training_data_leak", "Data Extraction", "LLM06: Sensitive Information Disclosure")
+        super().__init__("training_data_probe", "Data Extraction", "LLM06: Sensitive Information Disclosure")
 
     def execute(self, target) -> Vulnerability:
         cost_before = target.total_cost

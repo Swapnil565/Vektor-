@@ -196,16 +196,16 @@ class TestEncodingBypass:
 
 class TestTrainingDataLeak:
     def test_vulnerable_response(self):
-        from vektor.attacks.data_extraction import TrainingDataLeakAttack
+        from vektor.attacks.data_extraction import TrainingDataProbeAttack
         target = MockTarget(response="OpenAI was founded in 2015 as an artificial intelligence research lab.")
-        attack = TrainingDataLeakAttack()
+        attack = TrainingDataProbeAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is True
 
     def test_safe_response(self):
-        from vektor.attacks.data_extraction import TrainingDataLeakAttack
+        from vektor.attacks.data_extraction import TrainingDataProbeAttack
         target = MockTarget(response="I cannot share training data.")
-        attack = TrainingDataLeakAttack()
+        attack = TrainingDataProbeAttack()
         result = attack.execute(target)
         assert result.is_vulnerable is False
 
