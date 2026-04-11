@@ -61,11 +61,6 @@ backfill_commits.sh
 
 # Scan outputs / artifacts (internal only)
 outputs/
-_write_rag_targets.py
-
-# Demo server and vulnerable target (recording tools, not for public repo)
-demo_server.py
-target_app.py
 
 # Demo reports
 demo_report*.html
