@@ -6,7 +6,6 @@ from vektor.attacks.registry import ATTACK_REGISTRY
 from vektor.targets.base import BaseTarget
 from vektor.scoring.severity import get_severity_scorer
 from vektor.utils.budget import BudgetManager
-from vektor.utils.cache import ResponseCache
 
 
 class VektorScanner:
@@ -81,11 +80,9 @@ class VektorScanner:
         self,
         target: BaseTarget,
         budget_limit: float = 1.0,
-        enable_cache: bool = False   # OFF by default — security testing needs fresh results
     ):
         self.target = target
         self.budget = BudgetManager(limit=budget_limit)
-        self.cache = ResponseCache() if enable_cache else None
         self.scorer = get_severity_scorer()
         self.attacks = self._load_attacks()
 
