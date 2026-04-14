@@ -18,7 +18,7 @@ An automated security testing framework that scans LLM applications for vulnerab
 
 ```bash
 # Step 1: Install
-pip install vektor
+pip install vektor-scan
 
 # Step 2: Zero-setup demo (no API key)
 vektor demo
@@ -129,12 +129,12 @@ docker run -e OPENAI_API_KEY=$OPENAI_API_KEY vektor scan --target openai
 
 ### pip
 ```bash
-pip install vektor
+pip install vektor-scan
 ```
 
 ### From Source
 ```bash
-git clone https://github.com/swapnilwankhede23/vektor.git
+git clone https://github.com/Swapnil565/Vektor-.git
 cd vektor
 pip install -e .
 ```
@@ -224,7 +224,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install Vektor
-        run: pip install vektor
+        run: pip install vektor-scan
       - name: Scan (no API key needed)
         run: vektor scan --target vulnerable --ci --output report.json
       - name: Upload Report
@@ -295,8 +295,8 @@ Built on research from:
 
 If you find this useful, please star the repository and share with your network!
 
-- GitHub: [vektor](https://github.com/swapnilwankhede23/vektor)
-- Issues: [Bug reports & feature requests](https://github.com/swapnilwankhede23/vektor/issues)
+- GitHub: [vektor](https://github.com/Swapnil565/Vektor-)
+- Issues: [Bug reports & feature requests](https://github.com/Swapnil565/Vektor-/issues)
 
 ## 📧 Contact
 
