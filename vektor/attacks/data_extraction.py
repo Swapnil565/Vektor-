@@ -188,3 +188,4 @@ class PIILeakageAttack(BaseAttack):
             remediation="Implement PII detection and redaction before injecting documents into LLM context. Apply output filtering for common PII patterns.",
             cost=target.total_cost - cost_before
         )
+
