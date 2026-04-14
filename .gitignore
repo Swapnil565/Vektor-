@@ -43,16 +43,9 @@ ENV/
 # Config files
 .llmguard/
 
-# Reports (all scan output files — never commit these)
-report.json
-report.html
-*.log
-*_report.html
-*_report.json
-*_scan.html
-*_scan.json
-demo_report*.html
-demo_report*.json
+# Reports — all root-level scan output files (never commit these)
+/*.html
+/*.json
 
 # Temp files
 tmpclaude-*
@@ -64,6 +57,7 @@ tmpclaude-*
 # Internal docs & scripts (not for public repo)
 docs/internal/
 backfill_commits.sh
+LAUNCH.md
 
 # Scan outputs / artifacts (internal only)
 outputs/
