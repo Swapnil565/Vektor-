@@ -33,7 +33,7 @@ jobs:
 
       - name: Run demo mode (smoke test)
         run: |
-          llmguard demo
+          vektor demo
 
   lint:
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check llmguard/ tests/
+          ruff check vektor/ tests/
 
   docker:
     runs-on: ubuntu-latest
@@ -60,8 +60,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t llmguard-lite .
+        run: docker build -t vektor .
 
       - name: Test Docker demo mode
-        run: docker run --rm llmguard-lite demo
-
+        run: docker run --rm vektor demo
