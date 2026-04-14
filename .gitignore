@@ -43,10 +43,16 @@ ENV/
 # Config files
 .llmguard/
 
-# Reports
+# Reports (all scan output files — never commit these)
 report.json
 report.html
 *.log
+*_report.html
+*_report.json
+*_scan.html
+*_scan.json
+demo_report*.html
+demo_report*.json
 
 # Temp files
 tmpclaude-*
@@ -62,9 +68,10 @@ backfill_commits.sh
 # Scan outputs / artifacts (internal only)
 outputs/
 
-# Demo reports
-demo_report*.html
-demo_report*.json
-
 # Personal Claude Code config
 CLAUDE.md
+
+# Test system / demo backends (not part of vektor package)
+examples/target_app.py
+examples/demo_server.py
+examples/_write_rag_targets.py
