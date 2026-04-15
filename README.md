@@ -20,11 +20,11 @@ An automated security testing framework that scans LLM applications for vulnerab
 # Step 1: Install
 pip install vektor-scan
 
-# Step 2: Zero-setup demo (no API key)
-vektor demo
+# Step 2: Zero-setup demo (no API key needed)
+python -m vektor demo
 
 # Step 3: Real scan, $0 cost, always works
-vektor scan --target vulnerable --output my-first-report.html
+python -m vektor scan --target vulnerable --output my-first-report.html
 
 # Step 4: Open the report
 # Windows: start my-first-report.html
@@ -33,30 +33,32 @@ vektor scan --target vulnerable --output my-first-report.html
 
 # Step 5 (optional): Scan your own LLM app
 export OPENAI_API_KEY=sk-your-key
-vektor scan --target openai --budget 1.0
+python -m vektor scan --target openai --budget 1.0
 ```
+
+> **Note:** On some systems `vektor` works directly as a CLI command. If not, use `python -m vektor` — it always works everywhere.
 
 ## 🌐 Scan Any AI API — No SDK Needed
 
 Point Vektor at any HTTP endpoint:
 ```bash
 # Auto-detects OpenAI/Anthropic/custom shapes
-vektor scan --url http://localhost:8000/chat
+python -m vektor scan --url http://localhost:8000/chat
 
 # With auth header
-vektor scan --url https://my-app.com/api \
+python -m vektor scan --url https://my-app.com/api \
   --header "Authorization: Bearer YOUR_TOKEN"
 
 # Custom request/response field names
-vektor scan --url http://localhost:8000/predict \
+python -m vektor scan --url http://localhost:8000/predict \
   --request-field prompt --response-field answer
 
 # Query-parameter mode (e.g. /api/parse?text=PAYLOAD)
-vektor scan --url http://localhost:8000/api/parse \
+python -m vektor scan --url http://localhost:8000/api/parse \
   --param-field text
 
 # Rate-limited API — add delay between requests
-vektor scan --url http://localhost:8000/chat \
+python -m vektor scan --url http://localhost:8000/chat \
   --request-delay 12.0
 ```
 
@@ -143,27 +145,27 @@ pip install -e .
 
 ### Basic Scan
 ```bash
-vektor scan --target openai --budget 1.0
+python -m vektor scan --target openai --budget 1.0
 ```
 
 ### Quick Mode (High-confidence attacks only)
 ```bash
-vektor scan --target openai --quick
+python -m vektor scan --target openai --quick
 ```
 
 ### CI/CD Integration
 ```bash
-vektor scan --target openai --ci --output report.json
+python -m vektor scan --target openai --ci --output report.json
 ```
 
 ### Specific Attacks
 ```bash
-vektor scan --target openai --attacks direct_injection,system_override
+python -m vektor scan --target openai --attacks direct_injection,system_override
 ```
 
 ### Demo Mode (No API calls)
 ```bash
-vektor demo
+python -m vektor demo
 ```
 
 ## 📊 Sample Output
