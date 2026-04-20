@@ -232,7 +232,11 @@ def _execute_scan(
             for h in headers:
                 if ":" in h:
                     k, _, v = h.partition(":")
-                    parsed_headers[k.strip()] = v.strip()
+                    k, v = k.strip(), v.strip()
+                    if any(c in k + v for c in ('\r', '\n')):
+                        console.print(f"[red]Invalid header (contains CR/LF): {h!r}[/red]")
+                        sys.exit(1)
+                    parsed_headers[k] = v
             target_kwargs["headers"] = parsed_headers
         if request_field != "message":
             target_kwargs["request_field"] = request_field

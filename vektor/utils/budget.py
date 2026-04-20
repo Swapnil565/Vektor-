@@ -1,12 +1,17 @@
+import threading
+
+
 class BudgetManager:
     """Tracks and enforces API spending limits."""
 
     def __init__(self, limit: float = 1.0):
         self.limit = limit
         self.spent = 0.0
+        self._lock = threading.Lock()
 
     def add_cost(self, cost: float):
-        self.spent += cost
+        with self._lock:
+            self.spent += cost
 
     def is_exceeded(self) -> bool:
         return self.spent >= self.limit

@@ -2,6 +2,8 @@ from typing import List, Dict, Optional
 from datetime import datetime
 import re
 
+MAX_DUPLICATE_FINDINGS = 3  # Cap repeated analysis findings to avoid rate-limit false positives
+
 from vektor.attacks.registry import ATTACK_REGISTRY
 from vektor.targets.base import BaseTarget
 from vektor.scoring.severity import get_severity_scorer
@@ -29,8 +31,8 @@ class VektorScanner:
             "severity": "MEDIUM",
             "owasp": "LLM06: Sensitive Information Disclosure",
             "pattern": re.compile(
-                r"(traceback|exception|name '.*' is not defined|unterminated string|"
-                r"jsondecodeerror|could not parse input|failed to .*event)",
+                r"(traceback|exception|name '.{0,100}' is not defined|unterminated string|"
+                r"jsondecodeerror|could not parse input|failed to .{0,100}event)",
                 re.IGNORECASE,
             ),
             "description": "Backend errors are reflected to the client response.",
@@ -178,11 +180,11 @@ class VektorScanner:
         }
 
     def _compute_risk_score(self, all_results: List, vulnerable: List, finding_categories: Dict[str, int]) -> int:
-        if not vulnerable:
+        if not vulnerable or not all_results:
             return 0
 
         total_weight = sum(self.SEVERITY_WEIGHTS.get(v.get('severity', 'INFO'), 0) for v in vulnerable)
-        max_weight = len(all_results) * 10 if all_results else 1
+        max_weight = len(all_results) * 10
         severity_score = int((total_weight / max_weight) * 100)
 
         category_score = min(
@@ -325,9 +327,9 @@ class VektorScanner:
                     rate_limit_signals += 1
 
             count = detector_counts[detector_id]
-            if count <= 3:
+            if count <= MAX_DUPLICATE_FINDINGS:
                 result.append(vuln)
-            elif count == 4:
+            elif count == MAX_DUPLICATE_FINDINGS + 1:
                 # Annotate the 3rd finding with a suppression note
                 for item in result:
                     if item.get("attack_name", "").startswith(f"analysis_{detector_id}:"):

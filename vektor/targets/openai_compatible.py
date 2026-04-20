@@ -160,7 +160,10 @@ class OpenAICompatibleTarget(BaseTarget):
 
     def _extract_docx(self, file_path: str) -> str:
         from docx import Document
-        doc = Document(file_path)
+        try:
+            doc = Document(file_path)
+        except Exception as exc:
+            raise ValueError(f"Failed to parse DOCX '{file_path}': {exc}") from exc
         parts = []
         for para in doc.paragraphs:
             if para.text.strip():
@@ -197,7 +200,13 @@ class OpenAICompatibleTarget(BaseTarget):
                 self.total_cost += self._calculate_cost(response.usage)
             return content
         except openai.APIError as e:
-            raise RuntimeError(f"{self._provider} API error: {e}")
+            raise RuntimeError(f"{self._provider} API error: {self._redact_secrets(str(e))}")
+
+    @staticmethod
+    def _redact_secrets(text: str) -> str:
+        """Remove API key patterns from error strings before surfacing them."""
+        import re as _re
+        return _re.sub(r"(sk-[A-Za-z0-9]{6})[A-Za-z0-9]+", r"\1***", text)
 
     def _build_system_message(self, use_documents: bool) -> Optional[str]:
         parts = []
