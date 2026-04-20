@@ -3,7 +3,7 @@ Demo mode: pre-built fake results that showcase vektor's capabilities.
 No API key needed. This is what people screenshot.
 """
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
@@ -15,7 +15,7 @@ from vektor.scoring.reporter import Reporter
 DEMO_RESULTS = {
     "target": "openai-gpt-3.5-turbo",
     "model": "gpt-3.5-turbo",
-    "timestamp": datetime.utcnow().isoformat() + "Z",
+    "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
     "budget_limit": 1.0,
     "vulnerabilities": [
         {

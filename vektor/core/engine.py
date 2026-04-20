@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 
 MAX_DUPLICATE_FINDINGS = 3  # Cap repeated analysis findings to avoid rate-limit false positives
@@ -120,7 +120,7 @@ class VektorScanner:
         results = {
             'target': self.target.name,
             'model': getattr(self.target, 'model', 'unknown'),
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
             'budget_limit': self.budget.limit,
             'vulnerabilities': [],
             'all_results': [],
@@ -262,7 +262,7 @@ class VektorScanner:
 
         findings = []
         source_attack = result.get("attack_name", "unknown")
-        now = datetime.utcnow().isoformat() + 'Z'
+        now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
         for detector in self._ANALYSIS_DETECTORS:
             hits = []
