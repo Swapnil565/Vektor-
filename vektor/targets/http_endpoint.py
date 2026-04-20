@@ -210,6 +210,8 @@ class HTTPEndpointTarget(BaseTarget):
         if self.request_delay > 0 and self.request_count > 0:
             time.sleep(self.request_delay)
         self.request_count += 1
+        # Synthetic cost so budget limits still apply to HTTP targets
+        self.total_cost += 0.0001
         body = self._build_request_body(prompt)
         data = self._http_request(body, prompt=prompt)
         return self._extract_response(data)

@@ -25,7 +25,6 @@ import re
 import importlib
 import importlib.util
 import sys
-import warnings
 from pathlib import Path
 from typing import Optional, Type, TYPE_CHECKING
 
@@ -113,10 +112,19 @@ def load_plugin_file(path: str) -> int:
     Returns the number of new attacks registered.
 
     Used by: vektor scan --plugin ./my_attacks.py
+
+    WARNING: This executes arbitrary Python code from the given file with full
+    process privileges. Only load plugin files you trust completely.
     """
+    import sys as _sys
     p = Path(path).resolve()
     if not p.exists():
         raise FileNotFoundError(f"Plugin file not found: {p}")
+
+    print(
+        f"[vektor] WARNING: loading plugin '{p}' — this executes arbitrary Python code.",
+        file=_sys.stderr,
+    )
 
     before = set(ATTACK_REGISTRY.keys())
 
@@ -158,6 +166,6 @@ def discover_entry_points() -> int:
         try:
             ep.load()
         except Exception as e:
-            warnings.warn(f"Failed to load vektor.attacks entry point '{ep.name}': {e}", stacklevel=2)
+            print(f"[vektor] WARNING: failed to load entry point '{ep.name}': {e}", file=sys.stderr)
 
     return len(set(ATTACK_REGISTRY.keys()) - before)
