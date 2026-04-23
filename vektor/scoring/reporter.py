@@ -33,28 +33,28 @@ SEVERITY_EXPLANATIONS = {
 class Reporter:
     """Multi-format report generator."""
 
-    def print_terminal(self, results: Dict, console: Console):
+    def print_terminal(self, results: Dict, console: Console, skip_vuln_table: bool = False):
         """Rich terminal output — this is what people screenshot."""
         vulns = results.get("vulnerabilities", [])
         summary = results.get("summary", {})
 
-        # Vulnerability table
-        if vulns:
-            table = Table(show_header=True, header_style="bold cyan", title="Vulnerabilities Found")
-            table.add_column("Attack", min_width=30)
-            table.add_column("Severity", justify="center", min_width=10)
-            table.add_column("Success Rate", justify="right", min_width=12)
+        if not skip_vuln_table:
+            if vulns:
+                table = Table(show_header=True, header_style="bold cyan", title="Vulnerabilities Found")
+                table.add_column("Attack", min_width=30)
+                table.add_column("Severity", justify="center", min_width=10)
+                table.add_column("Success Rate", justify="right", min_width=12)
 
-            for v in sorted(vulns, key=lambda x: _severity_rank(x["severity"])):
-                color = SEVERITY_COLORS.get(v["severity"], "white")
-                table.add_row(
-                    v["attack_name"],
-                    f"[{color}]{v['severity']}[/{color}]",
-                    f"{v['success_rate']:.0%}",
-                )
-            console.print(table)
-        else:
-            console.print("[green]No vulnerabilities found![/green]")
+                for v in sorted(vulns, key=lambda x: _severity_rank(x["severity"])):
+                    color = SEVERITY_COLORS.get(v["severity"], "white")
+                    table.add_row(
+                        v["attack_name"],
+                        f"[{color}]{v['severity']}[/{color}]",
+                        f"{v['success_rate']:.0%}",
+                    )
+                console.print(table)
+            else:
+                console.print("[green]No vulnerabilities found![/green]")
 
         # Summary panel
         risk = summary.get("risk_score", 0)

@@ -100,6 +100,7 @@ class VektorScanner:
         attacks: Optional[List[str]] = None,
         quick_mode: bool = False,
         mode: str = "standard",
+        on_result=None,
     ) -> Dict:
         mode = (mode or "standard").lower()
         if mode not in {"standard", "analysis"}:
@@ -145,6 +146,9 @@ class VektorScanner:
             if mode == "analysis":
                 analysis_findings = self._analysis_findings_from_result(vuln_dict)
                 results['vulnerabilities'].extend(analysis_findings)
+
+            if on_result is not None:
+                on_result(vuln_dict)
 
         # Deduplicate analysis findings — cap same detector at 3 to prevent rate-limit inflation
         if mode == "analysis":
