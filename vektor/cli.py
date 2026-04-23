@@ -9,16 +9,28 @@ Commands:
     vektor info       - Show details about a specific attack
 """
 import sys
+import time
+import itertools
+import threading
 from typing import Optional
 import click
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
+from rich.live import Live
+from rich.spinner import Spinner
+from rich.text import Text
 from rich import box
 
 from vektor import __version__
 
+# Force UTF-8 on Windows so emoji render correctly
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 console = Console()
 
@@ -273,32 +285,73 @@ def _execute_scan(
         total = sum(1 for a in ATTACK_REGISTRY.values() if a['expected_success_rate'] > 0.5)
     else:
         total = len(ATTACK_REGISTRY)
-    _SEV_COLOR = {"CRITICAL": "bold red", "HIGH": "red", "MEDIUM": "yellow", "LOW": "cyan", "INFO": "dim"}
-    _counter = [0]
+    _THINKING = [
+        "Analyzing instruction boundaries...",
+        "Testing prompt isolation...",
+        "Evaluating context leakage...",
+        "Probing system prompt exposure...",
+        "Checking tool call integrity...",
+        "Assessing injection surface...",
+        "Mapping attack vectors...",
+        "Validating output filters...",
+        "Scanning data boundaries...",
+        "Reviewing access controls...",
+    ]
+    _SEV_COLOR = {"CRITICAL": "bold red", "HIGH": "yellow", "MEDIUM": "yellow", "LOW": "cyan", "INFO": "dim"}
+    _SEV_ICON  = {"CRITICAL": "❌", "HIGH": "⚠️ ", "MEDIUM": "~", "LOW": "-", "INFO": " "}
 
-    def _print_attack_result(vuln_dict):
-        _counter[0] += 1
-        idx = _counter[0]
+    _state = {"results": [], "count": 0, "think_idx": 0, "stop": False}
+
+    def _build_live():
+        think = _THINKING[_state["think_idx"] % len(_THINKING)]
+        t = Text()
+        t.append(f"\n  {think}\n\n", style="dim")
+        for line, style in _state["results"][-10:]:
+            t.append(f"  {line}\n", style=style)
+        return t
+
+    def _on_result(vuln_dict):
         name = vuln_dict.get("attack_name", "unknown")
-        sev = vuln_dict.get("severity", "INFO")
+        sev  = vuln_dict.get("severity", "INFO")
         rate = vuln_dict.get("success_rate", 0.0)
         is_vuln = vuln_dict.get("is_vulnerable", False)
         color = _SEV_COLOR.get(sev, "white")
+        icon  = _SEV_ICON.get(sev, " ")
+        _state["count"] += 1
+        _state["think_idx"] += 1
         if is_vuln:
-            sev_label = f"[{color}]{sev:<8}[/{color}]"
-            status = f"[{color}]VULNERABLE[/{color}]"
-            rate_str = f"  [{color}]{rate:.0%}[/{color}]"
+            line = f"{icon}  {name:<38}  {sev:<8}  {rate:.0%}"
+            _state["results"].append((line, color))
         else:
-            sev_label = "[dim]        [/dim]"
-            status = "[green]safe[/green]"
-            rate_str = ""
-        counter_label = f"({idx:>2}/{total})"
-        console.print(f"  {counter_label}  {name:<40} {sev_label}  {status}{rate_str}")
+            line = f"   {name:<38}  safe"
+            _state["results"].append((line, "dim"))
 
     if not ci:
-        console.print(f"\n[bold cyan]Scanning {total} attack(s)...[/bold cyan]\n")
-        results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode, on_result=_print_attack_result)
-        console.print()
+        with Live(
+            Spinner("line", text=" initializing..."),
+            refresh_per_second=10,
+            transient=True,
+            console=console,
+        ) as live:
+            def _animate():
+                for frame in itertools.cycle(["◐", "◓", "◑", "◒"]):
+                    if _state["stop"]:
+                        break
+                    cnt = _state["count"]
+                    live.update(Text.assemble(
+                        (f"  {frame} scanning  ({cnt}/{total})\n\n", "cyan"),
+                    ) + _build_live())
+                    time.sleep(0.12)
+
+            _anim_thread = threading.Thread(target=_animate, daemon=True)
+            _anim_thread.start()
+
+            results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode, on_result=_on_result)
+            _state["stop"] = True
+            _anim_thread.join(timeout=0.5)
+
+        console.print("\n  Scan complete.\n", style="bold green")
+        time.sleep(0.35)
     else:
         results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode)
 

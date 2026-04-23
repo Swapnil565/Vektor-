@@ -34,57 +34,55 @@ class Reporter:
     """Multi-format report generator."""
 
     def print_terminal(self, results: Dict, console: Console, skip_vuln_table: bool = False):
-        """Rich terminal output — this is what people screenshot."""
-        vulns = results.get("vulnerabilities", [])
+        """Clean minimal terminal report."""
         summary = results.get("summary", {})
-
-        if not skip_vuln_table:
-            if vulns:
-                table = Table(show_header=True, header_style="bold cyan", title="Vulnerabilities Found")
-                table.add_column("Attack", min_width=30)
-                table.add_column("Severity", justify="center", min_width=10)
-                table.add_column("Success Rate", justify="right", min_width=12)
-
-                for v in sorted(vulns, key=lambda x: _severity_rank(x["severity"])):
-                    color = SEVERITY_COLORS.get(v["severity"], "white")
-                    table.add_row(
-                        v["attack_name"],
-                        f"[{color}]{v['severity']}[/{color}]",
-                        f"{v['success_rate']:.0%}",
-                    )
-                console.print(table)
-            else:
-                console.print("[green]No vulnerabilities found![/green]")
-
-        # Summary panel
-        risk = summary.get("risk_score", 0)
-        risk_color = "red" if risk >= 60 else "yellow" if risk >= 30 else "green"
         by_sev = summary.get("by_severity", {})
-        sev_str = ", ".join(f"{count} {sev}" for sev, count in by_sev.items()) if by_sev else "None"
-        cost = summary.get("total_cost", 0)
-        total_run = summary.get("total_attacks_run", 0)
-        recommendation = summary.get("recommendation", "")
-        finding_categories = summary.get("finding_categories", {})
-        categories_str = (
-            "\n".join(
-                f"{k}: {finding_categories.get(k, 0)}"
-                for k in ("Prompt Injection", "Data Leakage", "Error Disclosure", "System Fingerprinting")
-            )
-            if finding_categories
-            else "Prompt Injection: 0\nData Leakage: 0\nError Disclosure: 0\nSystem Fingerprinting: 0"
-        )
+        cats   = summary.get("finding_categories", {})
+        risk   = summary.get("risk_score", 0)
+        cost   = summary.get("total_cost", 0)
+        total_run   = summary.get("total_attacks_run", 0)
+        total_vulns = summary.get("total_vulnerabilities", 0)
+        mode   = summary.get("mode", "standard")
 
-        console.print(Panel(
-            f"[bold]Risk Score: [{risk_color}]{risk}/100[/{risk_color}][/bold]\n"
-            f"Vulnerabilities: {summary.get('total_vulnerabilities', 0)} ({sev_str})\n"
-            f"Cost: ${cost:.4f}  |  Attacks Run: {total_run}\n"
-            f"Mode: {summary.get('mode', 'standard')}\n\n"
-            f"[bold]Finding Categories[/bold]\n"
-            f"{categories_str}\n\n"
-            f"{recommendation}",
-            title="Summary",
-            border_style=risk_color,
-        ))
+        risk_color = "bold red" if risk >= 60 else "yellow" if risk >= 30 else "bold green"
+        div = "  " + "─" * 54
+
+        console.print()
+        console.print(div, style="dim")
+        console.print(f"\n  Risk Score   [{risk_color}]{risk} / 100[/{risk_color}]\n")
+        console.print(div, style="dim")
+        console.print()
+
+        # Severity counts
+        crit = by_sev.get("CRITICAL", 0)
+        high = by_sev.get("HIGH", 0)
+        med  = by_sev.get("MEDIUM", 0)
+        safe = total_run - total_vulns
+        parts = []
+        if crit: parts.append(f"[bold red]Critical  {crit}[/bold red]")
+        if high: parts.append(f"[yellow]High  {high}[/yellow]")
+        if med:  parts.append(f"[yellow]Medium  {med}[/yellow]")
+        parts.append(f"[dim]Safe  {safe}[/dim]")
+        console.print("  " + "    ".join(parts))
+        console.print()
+
+        # Attack categories (only non-zero)
+        cat_lines = [
+            ("Prompt Injection",    cats.get("Prompt Injection", 0)),
+            ("Data Leakage",        cats.get("Data Leakage", 0)),
+            ("Error Disclosure",    cats.get("Error Disclosure", 0)),
+            ("System Fingerprint",  cats.get("System Fingerprinting", 0)),
+        ]
+        shown = [(k, v) for k, v in cat_lines if v > 0]
+        if shown:
+            for k, v in shown:
+                console.print(f"  [dim]{k:<22}[/dim]  {v}")
+            console.print()
+
+        console.print(f"  [dim]${cost:.4f}  ·  {total_run} attacks  ·  {mode}[/dim]")
+        console.print()
+        console.print(div, style="dim")
+        console.print()
 
     def save_json(self, results: Dict, output_path: str):
         """Save results as JSON."""
