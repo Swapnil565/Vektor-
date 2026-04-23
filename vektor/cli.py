@@ -14,7 +14,6 @@ import click
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.prompt import Prompt, Confirm
 from rich import box
 
@@ -274,17 +273,32 @@ def _execute_scan(
         total = sum(1 for a in ATTACK_REGISTRY.values() if a['expected_success_rate'] > 0.5)
     else:
         total = len(ATTACK_REGISTRY)
+    _SEV_COLOR = {"CRITICAL": "bold red", "HIGH": "red", "MEDIUM": "yellow", "LOW": "cyan", "INFO": "dim"}
+    _counter = [0]
+
+    def _print_attack_result(vuln_dict):
+        _counter[0] += 1
+        idx = _counter[0]
+        name = vuln_dict.get("attack_name", "unknown")
+        sev = vuln_dict.get("severity", "INFO")
+        rate = vuln_dict.get("success_rate", 0.0)
+        is_vuln = vuln_dict.get("is_vulnerable", False)
+        color = _SEV_COLOR.get(sev, "white")
+        if is_vuln:
+            sev_label = f"[{color}]{sev:<8}[/{color}]"
+            status = f"[{color}]VULNERABLE[/{color}]"
+            rate_str = f"  [{color}]{rate:.0%}[/{color}]"
+        else:
+            sev_label = "[dim]        [/dim]"
+            status = "[green]safe[/green]"
+            rate_str = ""
+        counter_label = f"({idx:>2}/{total})"
+        console.print(f"  {counter_label}  {name:<40} {sev_label}  {status}{rate_str}")
+
     if not ci:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("{task.completed}/{task.total}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Scanning...", total=total)
-            results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode)
-            progress.update(task, completed=len(results.get("all_results", [])))
+        console.print(f"\n[bold cyan]Scanning {total} attack(s)...[/bold cyan]\n")
+        results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode, on_result=_print_attack_result)
+        console.print()
     else:
         results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode)
 
@@ -294,7 +308,7 @@ def _execute_scan(
         import json
         click.echo(json.dumps(results, indent=2))
     else:
-        reporter.print_terminal(results, console)
+        reporter.print_terminal(results, console, skip_vuln_table=True)
 
     # Derive json/html paths regardless of what extension --output has
     if output.endswith(".html"):
