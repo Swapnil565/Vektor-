@@ -34,54 +34,73 @@ class Reporter:
     """Multi-format report generator."""
 
     def print_terminal(self, results: Dict, console: Console, skip_vuln_table: bool = False):
-        """Clean minimal terminal report."""
-        summary = results.get("summary", {})
-        by_sev = summary.get("by_severity", {})
-        cats   = summary.get("finding_categories", {})
-        risk   = summary.get("risk_score", 0)
-        cost   = summary.get("total_cost", 0)
+        """Premium minimal terminal report."""
+        summary     = results.get("summary", {})
+        by_sev      = summary.get("by_severity", {})
+        cats        = summary.get("finding_categories", {})
+        risk        = summary.get("risk_score", 0)
+        cost        = summary.get("total_cost", 0)
         total_run   = summary.get("total_attacks_run", 0)
         total_vulns = summary.get("total_vulnerabilities", 0)
-        mode   = summary.get("mode", "standard")
+        mode        = summary.get("mode", "standard")
 
         risk_color = "bold red" if risk >= 60 else "yellow" if risk >= 30 else "bold green"
-        div = "  " + "─" * 54
+        div = "  " + "━" * 46
 
         console.print()
-        console.print(div, style="dim")
-        console.print(f"\n  Risk Score   [{risk_color}]{risk} / 100[/{risk_color}]\n")
-        console.print(div, style="dim")
+        console.print(div)
+        console.print(f"  🚨  [{risk_color}]Risk Score   {risk} / 100[/{risk_color}]")
+        console.print(div)
         console.print()
 
-        # Severity counts
+        # Aligned severity counts
         crit = by_sev.get("CRITICAL", 0)
         high = by_sev.get("HIGH", 0)
         med  = by_sev.get("MEDIUM", 0)
         safe = total_run - total_vulns
-        parts = []
-        if crit: parts.append(f"[bold red]Critical  {crit}[/bold red]")
-        if high: parts.append(f"[yellow]High  {high}[/yellow]")
-        if med:  parts.append(f"[yellow]Medium  {med}[/yellow]")
-        parts.append(f"[dim]Safe  {safe}[/dim]")
-        console.print("  " + "    ".join(parts))
+        if crit: console.print(f"  [bold red]{'Critical':<12}  {crit}[/bold red]")
+        if high: console.print(f"  [yellow]{'High':<12}  {high}[/yellow]")
+        if med:  console.print(f"  [yellow]{'Medium':<12}  {med}[/yellow]")
+        console.print(f"  [dim]{'Safe':<12}  {safe}[/dim]")
         console.print()
 
-        # Attack categories (only non-zero)
-        cat_lines = [
-            ("Prompt Injection",    cats.get("Prompt Injection", 0)),
-            ("Data Leakage",        cats.get("Data Leakage", 0)),
-            ("Error Disclosure",    cats.get("Error Disclosure", 0)),
-            ("System Fingerprint",  cats.get("System Fingerprinting", 0)),
+        # Top Issues (non-zero categories only, max 3)
+        issues = [
+            ("Prompt Injection",   cats.get("Prompt Injection", 0)),
+            ("Data Leakage",       cats.get("Data Leakage", 0)),
+            ("Error Disclosure",   cats.get("Error Disclosure", 0)),
+            ("System Fingerprint", cats.get("System Fingerprinting", 0)),
         ]
-        shown = [(k, v) for k, v in cat_lines if v > 0]
-        if shown:
-            for k, v in shown:
-                console.print(f"  [dim]{k:<22}[/dim]  {v}")
+        issues = [(k, v) for k, v in issues if v > 0][:3]
+        if issues:
+            console.print("  [dim]Top Issues[/dim]")
+            for k, v in issues:
+                console.print(f"  [cyan]•[/cyan] [dim]{k:<22}[/dim]  ({v})")
             console.print()
 
-        console.print(f"  [dim]${cost:.4f}  ·  {total_run} attacks  ·  {mode}[/dim]")
+        console.print(f"  [dim]Cost: ${cost:.4f}   •   {total_run} attacks[/dim]")
         console.print()
-        console.print(div, style="dim")
+        console.print(div)
+
+        # ONE insight — template-based from dominant category
+        pi = cats.get("Prompt Injection", 0)
+        dl = cats.get("Data Leakage", 0)
+        ed = cats.get("Error Disclosure", 0)
+        sf = cats.get("System Fingerprinting", 0)
+        if total_vulns == 0:
+            insight = "No significant vulnerabilities detected across the attack surface."
+        elif pi and pi >= max(dl, ed, sf):
+            insight = "Model is vulnerable to prompt injection due to weak instruction isolation."
+        elif dl and dl >= max(pi, ed, sf):
+            insight = "System prompt and internal data are exposed through targeted probing."
+        elif ed > 0:
+            insight = "Backend errors are leaking implementation details in model responses."
+        else:
+            insight = "Provider and infrastructure signals are visible in model output."
+
+        console.print()
+        console.print("  [dim]💡 Insight[/dim]")
+        console.print(f"  [dim]{insight}[/dim]")
         console.print()
 
     def save_json(self, results: Dict, output_path: str):

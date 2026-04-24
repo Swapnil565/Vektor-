@@ -217,11 +217,12 @@ def _execute_scan(
 
     if not ci:
         label = url or f"{target}/{model or '(default)'}"
-        console.print(Panel(
-            f"[bold cyan]Vektor Security Scanner v{__version__}[/bold cyan]\n"
-            f"Target: {label}  |  Budget: ${budget:.2f}  |  Mode: {mode}",
-            border_style="cyan"
-        ))
+        console.print()
+        console.print(f"  [bold cyan]Vektor[/bold cyan]  [dim]v{__version__}[/dim]")
+        console.print(f"  [dim]{'─' * 50}[/dim]")
+        console.print(f"  [dim]Target:[/dim]  {label}")
+        console.print(f"  [dim]Budget:[/dim]  ${budget:.2f}   [dim]Mode:[/dim]  {mode}")
+        console.print()
 
     target_kwargs = {}
     if api_key:
@@ -285,71 +286,69 @@ def _execute_scan(
         total = sum(1 for a in ATTACK_REGISTRY.values() if a['expected_success_rate'] > 0.5)
     else:
         total = len(ATTACK_REGISTRY)
-    _THINKING = [
-        "Analyzing instruction boundaries...",
-        "Testing prompt isolation...",
-        "Evaluating context leakage...",
-        "Probing system prompt exposure...",
-        "Checking tool call integrity...",
-        "Assessing injection surface...",
-        "Mapping attack vectors...",
-        "Validating output filters...",
-        "Scanning data boundaries...",
-        "Reviewing access controls...",
-    ]
-    _SEV_COLOR = {"CRITICAL": "bold red", "HIGH": "yellow", "MEDIUM": "yellow", "LOW": "cyan", "INFO": "dim"}
-    _SEV_ICON  = {"CRITICAL": "❌", "HIGH": "⚠️ ", "MEDIUM": "~", "LOW": "-", "INFO": " "}
+    _SPIN_FRAMES = ["◐", "◓", "◑", "◒"]
+    _SEV_COLOR   = {"CRITICAL": "bold red", "HIGH": "yellow", "MEDIUM": "yellow", "LOW": "cyan", "INFO": "dim"}
+    _SEV_ICON    = {"CRITICAL": "❌", "HIGH": "⚠ ", "MEDIUM": "~", "LOW": "-", "INFO": " "}
+    _SEV_LABEL   = {"CRITICAL": "Critical", "HIGH": "High", "MEDIUM": "Medium", "LOW": "Low", "INFO": "Info"}
 
-    _state = {"results": [], "count": 0, "think_idx": 0, "stop": False}
+    _sc = {
+        "done":    [],     # (frame, name, icon, label, color)
+        "current": "",     # name of in-flight attack
+        "frame":   0,      # spinner frame index
+        "stop":    False,
+    }
 
-    def _build_live():
-        think = _THINKING[_state["think_idx"] % len(_THINKING)]
+    def _build_scan_view():
         t = Text()
-        t.append(f"\n  {think}\n\n", style="dim")
-        for line, style in _state["results"][-10:]:
-            t.append(f"  {line}\n", style=style)
+        t.append(f"\n  ⏺  Scanning {total} attacks\n\n", style="cyan")
+        for frame, name, icon, label, color in _sc["done"][-16:]:
+            t.append(f"  {frame}  testing: ", style="dim")
+            t.append(f"{name:<36}", style="")
+            t.append(f"  {icon}  {label}\n", style=color)
+        if _sc["current"]:
+            f = _SPIN_FRAMES[_sc["frame"] % 4]
+            t.append(f"\n  {f}  testing: ", style="cyan")
+            t.append(_sc["current"], style="dim")
         return t
 
+    def _on_start(attack_id):
+        _sc["current"] = attack_id
+
     def _on_result(vuln_dict):
-        name = vuln_dict.get("attack_name", "unknown")
-        sev  = vuln_dict.get("severity", "INFO")
-        rate = vuln_dict.get("success_rate", 0.0)
+        name    = vuln_dict.get("attack_name", "unknown")
+        sev     = vuln_dict.get("severity", "INFO")
         is_vuln = vuln_dict.get("is_vulnerable", False)
-        color = _SEV_COLOR.get(sev, "white")
-        icon  = _SEV_ICON.get(sev, " ")
-        _state["count"] += 1
-        _state["think_idx"] += 1
+        frame   = _SPIN_FRAMES[len(_sc["done"]) % 4]
         if is_vuln:
-            line = f"{icon}  {name:<38}  {sev:<8}  {rate:.0%}"
-            _state["results"].append((line, color))
+            color = _SEV_COLOR.get(sev, "white")
+            _sc["done"].append((frame, name, _SEV_ICON.get(sev, " "), _SEV_LABEL.get(sev, sev), color))
         else:
-            line = f"   {name:<38}  safe"
-            _state["results"].append((line, "dim"))
+            _sc["done"].append((frame, name, "✓", "Safe", "dim"))
+        _sc["current"] = ""
 
     if not ci:
         with Live(
-            Spinner("line", text=" initializing..."),
+            _build_scan_view(),
             refresh_per_second=10,
             transient=True,
             console=console,
         ) as live:
             def _animate():
-                for frame in itertools.cycle(["◐", "◓", "◑", "◒"]):
-                    if _state["stop"]:
-                        break
-                    cnt = _state["count"]
-                    live.update(Text.assemble(
-                        (f"  {frame} scanning  ({cnt}/{total})\n\n", "cyan"),
-                    ) + _build_live())
+                while not _sc["stop"]:
+                    _sc["frame"] += 1
+                    live.update(_build_scan_view())
                     time.sleep(0.12)
 
-            _anim_thread = threading.Thread(target=_animate, daemon=True)
-            _anim_thread.start()
+            _anim = threading.Thread(target=_animate, daemon=True)
+            _anim.start()
+            results = scanner.scan(
+                attacks=attack_list, quick_mode=quick, mode=mode,
+                on_result=_on_result, on_attack_start=_on_start,
+            )
+            _sc["stop"] = True
+            _anim.join(timeout=0.5)
 
-            results = scanner.scan(attacks=attack_list, quick_mode=quick, mode=mode, on_result=_on_result)
-            _state["stop"] = True
-            _anim_thread.join(timeout=0.5)
-
+        console.clear()
         console.print("\n  Scan complete.\n", style="bold green")
         time.sleep(0.35)
     else:
