@@ -101,6 +101,7 @@ class VektorScanner:
         quick_mode: bool = False,
         mode: str = "standard",
         on_result=None,
+        on_attack_start=None,
     ) -> Dict:
         mode = (mode or "standard").lower()
         if mode not in {"standard", "analysis"}:
@@ -133,6 +134,9 @@ class VektorScanner:
                 results['summary']['budget_exceeded'] = True
                 results['summary']['incomplete'] = True
                 break
+
+            if on_attack_start is not None:
+                on_attack_start(attack_id)
 
             attack = self.attacks[attack_id]
             vulnerability = attack.execute(self.target)
