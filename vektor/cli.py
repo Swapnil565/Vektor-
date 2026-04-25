@@ -218,8 +218,8 @@ def _execute_scan(
     if not ci:
         label = url or f"{target}/{model or '(default)'}"
         console.print()
-        console.print(f"  [bold cyan]Vektor[/bold cyan]  [dim]v{__version__}[/dim]")
-        console.print(f"  [dim]{'─' * 50}[/dim]")
+        console.print(f"  [bold]Vektor Security Scanner[/bold]  [dim]v{__version__}[/dim]")
+        console.print(f"  [dim]{'─' * 40}[/dim]")
         console.print(f"  [dim]Target:[/dim]  {label}")
         console.print(f"  [dim]Budget:[/dim]  ${budget:.2f}   [dim]Mode:[/dim]  {mode}")
         console.print()
@@ -300,15 +300,15 @@ def _execute_scan(
 
     def _build_scan_view():
         t = Text()
-        t.append(f"\n  ⏺  Scanning {total} attacks\n\n", style="cyan")
+        t.append(f"\n  Scanning {total} attacks\n\n", style="dim")
         for frame, name, icon, label, color in _sc["done"][-16:]:
-            t.append(f"  {frame}  testing: ", style="dim")
-            t.append(f"{name:<36}", style="")
+            t.append(f"  {frame}  ", style="dim")
+            t.append(f"testing: {name:<34}", style="")
             t.append(f"  {icon}  {label}\n", style=color)
         if _sc["current"]:
             f = _SPIN_FRAMES[_sc["frame"] % 4]
-            t.append(f"\n  {f}  testing: ", style="cyan")
-            t.append(_sc["current"], style="dim")
+            t.append(f"  {f}  ", style="cyan")
+            t.append(f"testing: {_sc['current']}", style="dim")
         return t
 
     def _on_start(attack_id):

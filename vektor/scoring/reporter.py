@@ -42,29 +42,28 @@ class Reporter:
         cost        = summary.get("total_cost", 0)
         total_run   = summary.get("total_attacks_run", 0)
         total_vulns = summary.get("total_vulnerabilities", 0)
-        mode        = summary.get("mode", "standard")
 
-        risk_color = "bold red" if risk >= 60 else "yellow" if risk >= 30 else "bold green"
-        div = "  " + "━" * 46
+        risk_color = "bold red" if risk >= 60 else "yellow" if risk >= 30 else "green"
+        div = "  " + "━" * 22
 
         console.print()
         console.print(div)
-        console.print(f"  🚨  [{risk_color}]Risk Score   {risk} / 100[/{risk_color}]")
+        console.print(f"  [dim]Risk Score[/dim]   [{risk_color}]{risk} / 100[/{risk_color}]")
         console.print(div)
         console.print()
 
-        # Aligned severity counts
+        # Aligned severity counts — label dim, count in status color
         crit = by_sev.get("CRITICAL", 0)
         high = by_sev.get("HIGH", 0)
         med  = by_sev.get("MEDIUM", 0)
         safe = total_run - total_vulns
-        if crit: console.print(f"  [bold red]{'Critical':<12}  {crit}[/bold red]")
-        if high: console.print(f"  [yellow]{'High':<12}  {high}[/yellow]")
-        if med:  console.print(f"  [yellow]{'Medium':<12}  {med}[/yellow]")
-        console.print(f"  [dim]{'Safe':<12}  {safe}[/dim]")
+        if crit: console.print(f"  [dim]{'Critical':<11}[/dim][red]{crit}[/red]")
+        if high: console.print(f"  [dim]{'High':<11}[/dim][yellow]{high}[/yellow]")
+        if med:  console.print(f"  [dim]{'Medium':<11}[/dim][yellow]{med}[/yellow]")
+        console.print(f"  [dim]{'Safe':<11}{safe}[/dim]")
         console.print()
 
-        # Top Issues (non-zero categories only, max 3)
+        # Top Issues — only non-zero, max 3, no color noise
         issues = [
             ("Prompt Injection",   cats.get("Prompt Injection", 0)),
             ("Data Leakage",       cats.get("Data Leakage", 0)),
@@ -75,32 +74,10 @@ class Reporter:
         if issues:
             console.print("  [dim]Top Issues[/dim]")
             for k, v in issues:
-                console.print(f"  [cyan]•[/cyan] [dim]{k:<22}[/dim]  ({v})")
+                console.print(f"  [dim]• {k:<22}  ({v})[/dim]")
             console.print()
 
         console.print(f"  [dim]Cost: ${cost:.4f}   •   {total_run} attacks[/dim]")
-        console.print()
-        console.print(div)
-
-        # ONE insight — template-based from dominant category
-        pi = cats.get("Prompt Injection", 0)
-        dl = cats.get("Data Leakage", 0)
-        ed = cats.get("Error Disclosure", 0)
-        sf = cats.get("System Fingerprinting", 0)
-        if total_vulns == 0:
-            insight = "No significant vulnerabilities detected across the attack surface."
-        elif pi and pi >= max(dl, ed, sf):
-            insight = "Model is vulnerable to prompt injection due to weak instruction isolation."
-        elif dl and dl >= max(pi, ed, sf):
-            insight = "System prompt and internal data are exposed through targeted probing."
-        elif ed > 0:
-            insight = "Backend errors are leaking implementation details in model responses."
-        else:
-            insight = "Provider and infrastructure signals are visible in model output."
-
-        console.print()
-        console.print("  [dim]💡 Insight[/dim]")
-        console.print(f"  [dim]{insight}[/dim]")
         console.print()
 
     def save_json(self, results: Dict, output_path: str):
