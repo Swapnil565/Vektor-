@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vektor-scan"
-version = "0.2.2"
+version = "0.2.3"
 description = "AI security testing framework — pytest for LLM applications"
 readme = "README.md"
 license = "MIT"
