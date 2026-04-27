@@ -11,6 +11,8 @@
 
 ![Vektor demo](docs/vektor-demo.gif)
 
+> Scan completes in ~30 seconds. Risk score + full attack breakdown, no config required.
+
 ---
 
 ## Install
